@@ -1,0 +1,17 @@
+[
+    {
+        "id": "boss",
+        "name": "Boss",
+        "icon": "icons/boss.png"
+    },
+    {
+        "id": "chest",
+        "name": "Chest",
+        "icon": "icons/chest.png"
+    },
+    {
+        "id": "npc",
+        "name": "NPC",
+        "icon": "icons/npc.png"
+    }
+]

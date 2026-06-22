@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Game Interactive Map</title>
+
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <div class="filter-panel">
+        <input
+            type="text"
+            id="search-input"
+            placeholder="Search..."
+        />
+
+        <label>
+            <input
+                type="checkbox"
+                id="hide-collected-checkbox"
+            />
+            Hide Collected
+        </label>
+
+        <label>
+            <input type="checkbox" value="boss" checked />
+            Boss
+        </label>
+
+        <label>
+            <input type="checkbox" value="chest" checked />
+            Chest
+        </label>
+
+        <label>
+            <input type="checkbox" value="npc" checked />
+            NPC
+        </label>
+
+        
+        <button id="reset-filters-btn">
+            Reset Filters
+        </button>
+
+
+        <select id="region-filter">
+            <option value="all">All Regions</option>
+            <option value="Forest">Forest</option>
+            <option value="Town">Town</option>
+        </select>
+
+        <select id="rarity-filter">
+            <option value="all">All Rarity</option>
+            <option value="Common">Common</option>
+            <option value="Rare">Rare</option>
+        </select>
+
+
+        <button id="reset-btn">
+            Reset Save
+        </button>
+
+        <span id="progress-text">
+            Collected: 0 / 0
+        </span>
+
+        <span id="visible-count-text">
+            Showing: 0 / 0
+        </span>
+
+        <button id="export-btn">
+        Export Save
+        </button>
+
+        <input
+            type="file"
+            id="import-input"
+            hidden
+        />
+
+        <button id="import-btn">
+            Import Save
+        </button>
+
+        <button id="export-project-btn">
+            Export Project
+        </button>
+
+        <input
+        type="file"
+        id="import-project-input"
+        hidden
+        />
+
+        <button id="import-project-btn">
+            Import Project
+        </button>
+
+        <input type="file" id="map-upload-input"accept="image/*" hidden/>
+
+        <button id="upload-map-btn">
+            Upload Map
+        </button>
+
+        <select id="map-select">
+            <option value="">Select Map</option>
+        </select>
+
+        <button id="edit-mode-btn">
+            Edit Mode: Off
+        </button>
+
+    </div>
+
+    <div class="main-layout">
+
+        <div class="map-viewport">
+            <div class="map-container">
+
+            <img
+                src="images/map.jpg"
+                alt="Game Map"
+                class="game-map"
+            />
+
+            <div id="tooltip"></div>
+
+            </div>
+        </div>
+
+        
+        <div class="sidebar">
+
+            <h2>Item Info</h2>
+
+            <div id="sidebar-content">
+
+                Click a marker...
+
+            </div>
+
+            <div class="marker-form">
+
+                <h3>Create Marker</h3>
+
+                <input
+                    type="text"
+                    id="new-marker-name"
+                    placeholder="Marker name"
+                />
+
+                <select id="new-marker-type">
+                </select>
+
+                <button id="create-marker-btn">
+                    Create Marker
+                </button>
+
+                <p class="form-hint">
+                    Turn on Edit Mode, click map position, then create marker.
+                </p>
+
+            </div>
+
+            <button id="delete-marker-btn">
+                Delete Marker
+            </button>
+
+            <button id="edit-marker-btn">
+                Edit Marker
+            </button>
+
+            <div id="marker-editor">
+
+            <input
+                id="new-marker-name"
+                placeholder="Marker Name"
+            />
+
+            <select id="new-marker-type">
+            </select>
+
+            </div>
+            
+
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
