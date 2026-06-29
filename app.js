@@ -109,6 +109,12 @@ let currentMapId = "default";//地圖id
 
 let pendingMarkerPosition = null;//暫存點擊座標
 
+//marker拖曳
+let draggingMarker = null;
+
+//這個marker是不是在被拖曳
+let isDraggingMarker = false;
+
 //函式宣告區域
 async function loadItems() {
 
@@ -221,7 +227,24 @@ function createMarker(item) {
 
     });
 
-    
+    //按下進入marker拖曳狀態
+    marker.addEventListener("mousedown", (event) => {
+
+        if (!isEditMode) {
+
+            return;
+
+        }
+
+        event.stopPropagation();//阻止事件繼續往外層傳遞。
+        event.preventDefault();
+
+
+        draggingMarker = marker;
+
+        isDraggingMarker = true;
+
+    });
 
     mapContainer.appendChild(marker);
 
@@ -1237,6 +1260,11 @@ importInput.addEventListener("change", (event) => {
 
 mapViewport.addEventListener("mousedown", (event) => {
 
+    //如果現在處於icon拖曳狀態就不要觸發
+    if (isDraggingMarker) {
+        return;
+    }
+
     if (event.button !== 0) {
         return;
     }
@@ -1488,5 +1516,43 @@ mapSelect.addEventListener("change", () => {
         switchMap(mapSelect.value);
 
     }
+
+});
+
+
+document.addEventListener("mousemove", (event) => {
+
+    if (!isDraggingMarker) {
+
+        return;
+
+    }
+
+    const rect =
+        mapContainer.getBoundingClientRect();
+
+    const x =
+        (event.clientX - rect.left) / scale;
+
+    const y =
+        (event.clientY - rect.top) / scale;
+
+    draggingMarker.style.left =
+        x + "px";
+
+    draggingMarker.style.top =
+        y + "px";
+
+});
+
+document.addEventListener("mouseup", () => {
+
+    if (!isDraggingMarker) {
+        return;
+    }
+
+    isDraggingMarker = false;
+
+    draggingMarker = null;
 
 });
