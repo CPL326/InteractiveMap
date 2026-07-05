@@ -11,7 +11,7 @@ A local-first interactive map editor.
 - Search
 - Filter
 - Export / Import project
-- Upload custom map images
+- Upload custom MapImages 
 - Add, edit, delete, and drag custom markers
 - Show map coordinates while moving the mouse
 - Save collected marker progress locally
