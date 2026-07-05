@@ -636,7 +636,227 @@ function updateSidebar(item, isCollected) {
 
 }
 
-f// ==============================
+// ==============================
+// Marker Edit Form / Sidebar 編輯表單
+// ==============================
+
+/**
+ * 在 sidebar 顯示 marker 編輯表單。
+ *
+ * 目前只會用在 custom marker。
+ * 使用者可以修改：
+ * 1. name
+ * 2. type
+ * 3. description
+ * 4. region
+ * 5. rarity
+ */
+function renderEditMarkerForm(item) {
+
+    const typeOptions =
+        markerTypes.map(type => {
+
+            const selected =
+                type.id === item.type ? "selected" : "";
+
+            return `
+                <option value="${type.id}" ${selected}>
+                    ${type.name}
+                </option>
+            `;
+
+        }).join("");
+
+    sidebarContent.innerHTML = `
+
+        <h3>Edit Marker</h3>
+
+        <label>
+            Name
+        </label>
+        <input
+            id="edit-marker-name"
+            type="text"
+            value="${item.name}"
+        />
+
+        <label>
+            Type
+        </label>
+        <select id="edit-marker-type">
+            ${typeOptions}
+        </select>
+
+        <label>
+            Description
+        </label>
+        <textarea id="edit-marker-description">${item.description || ""}</textarea>
+
+        <label>
+            Region
+        </label>
+        <input
+            id="edit-marker-region"
+            type="text"
+            value="${item.region || "Custom"}"
+        />
+
+        <label>
+            Rarity
+        </label>
+        <input
+            id="edit-marker-rarity"
+            type="text"
+            value="${item.rarity || "Common"}"
+        />
+
+        <div class="sidebar-button-row">
+            <button id="save-marker-edit-btn">
+                Save
+            </button>
+
+            <button id="cancel-marker-edit-btn">
+                Cancel
+            </button>
+        </div>
+    `;
+
+    const saveBtn =
+        document.getElementById("save-marker-edit-btn");
+
+    const cancelBtn =
+        document.getElementById("cancel-marker-edit-btn");
+
+    saveBtn.addEventListener("click", () => {
+
+        saveMarkerEdit(item);
+
+    });
+
+    cancelBtn.addEventListener("click", () => {
+
+        const marker =
+            document.querySelector(
+                `.marker[data-id="${item.id}"]`
+            );
+
+        const isCollected =
+            marker && marker.classList.contains("collected");
+
+        updateSidebar(item, isCollected);
+
+    });
+
+}
+
+/**
+ * 保存 sidebar 編輯表單的內容。
+ *
+ * 會更新：
+ * 1. customItems 裡的資料
+ * 2. localStorage
+ * 3. marker DOM dataset / class / icon
+ * 4. sidebar 顯示
+ * 5. filter 結果
+ */
+function saveMarkerEdit(item) {
+
+    const nameInput =
+        document.getElementById("edit-marker-name");
+
+    const typeSelect =
+        document.getElementById("edit-marker-type");
+
+    const descriptionInput =
+        document.getElementById("edit-marker-description");
+
+    const regionInput =
+        document.getElementById("edit-marker-region");
+
+    const rarityInput =
+        document.getElementById("edit-marker-rarity");
+
+    const newName =
+        nameInput.value.trim();
+
+    if (!newName) {
+
+        alert("Marker name is required.");
+
+        return;
+
+    }
+
+    item.name =
+        newName;
+
+    item.type =
+        typeSelect.value;
+
+    item.description =
+        descriptionInput.value.trim();
+
+    item.region =
+        regionInput.value.trim() || "Custom";
+
+    item.rarity =
+        rarityInput.value.trim() || "Common";
+
+    saveCustomItems();
+
+    const marker =
+        document.querySelector(
+            `.marker[data-id="${item.id}"]`
+        );
+
+    if (marker) {
+
+        const wasCollected =
+            marker.classList.contains("collected");
+
+        const wasSelected =
+            marker.classList.contains("selected");
+
+        marker.dataset.type =
+            item.type;
+
+        marker.dataset.name =
+            item.name.toLowerCase();
+
+        marker.dataset.region =
+            item.region;
+
+        marker.dataset.rarity =
+            item.rarity;
+
+        marker.className =
+            "marker";
+
+        marker.classList.add(item.type);
+
+        if (wasCollected) {
+            marker.classList.add("collected");
+        }
+
+        if (wasSelected) {
+            marker.classList.add("selected");
+        }
+
+        setMarkerIcon(marker, item.type);
+
+        updateSidebar(item, wasCollected);
+
+    }
+
+    updateFilters();
+
+    updateProgress();
+
+    updateVisibleCount();
+
+}
+
+// ==============================
 // Progress / 統計進度
 // ==============================
 
@@ -1188,15 +1408,11 @@ function deleteSelectedMarker() {
 /**
  * 編輯目前選取的自訂 marker。
  *
- * 注意：
- * 目前只允許編輯 customItems 裡的 marker。
- * 也就是使用者自己新增的 marker。
- *
- * 內建 items.json 裡的 marker 不會被編輯。
+ * 現在不再使用 prompt，
+ * 而是將 sidebar 切換成正式編輯表單。
  */
 function editSelectedMarker() {
 
-    // 沒有選取 marker 時不允許編輯
     if (!selectedItem) {
 
         alert("No marker selected");
@@ -1205,13 +1421,11 @@ function editSelectedMarker() {
 
     }
 
-    // 從 customItems 找出目前選取的 marker 資料
     const item =
         customItems.find(item =>
             item.id === selectedItem
         );
 
-    // 如果找不到，代表它不是自訂 marker
     if (!item) {
 
         alert("Only custom markers can be edited");
@@ -1220,79 +1434,9 @@ function editSelectedMarker() {
 
     }
 
-    // 依序詢問新的 marker 資料
-    // 第二個參數是預設值，也就是目前原本的內容
-    const newName =
-        prompt("Marker name?", item.name);
-
-    // 名稱是必要欄位，如果沒填就取消編輯
-    if (!newName) {
-        return;
-    }
-
-    const newType =
-        prompt("Type? boss / chest / npc", item.type);
-
-    const newDescription =
-        prompt("Description?", item.description);
-
-    const newRegion =
-        prompt("Region?", item.region);
-
-    const newRarity =
-        prompt("Rarity?", item.rarity);
-
-    // 更新 item 資料
-    item.name = newName;
-    item.type = newType || item.type;
-    item.description = newDescription || "";
-    item.region = newRegion || "Custom";
-    item.rarity = newRarity || "Common";
-
-    // 將修改後的 customItems 存回 localStorage
-    saveCustomItems();
-
-    // 找出畫面上對應的 marker DOM
-    const marker =
-        document.querySelector(
-            `.marker[data-id="${selectedItem}"]`
-        );
-
-    if (marker) {
-
-        const wasCollected =
-            marker.classList.contains("collected");
-
-        const wasSelected =
-            marker.classList.contains("selected");
-
-        marker.dataset.type = item.type;
-        marker.dataset.name = item.name.toLowerCase();
-        marker.dataset.region = item.region;
-        marker.dataset.rarity = item.rarity;
-
-        marker.className = "marker";
-        marker.classList.add(item.type);
-
-        if (wasCollected) {
-            marker.classList.add("collected");
-        }
-
-        if (wasSelected) {
-            marker.classList.add("selected");
-        }
-
-        setMarkerIcon(marker, item.type);
-
-        updateSidebar(item, wasCollected);
-
-    }
-
-    // 編輯後重新套用篩選條件
-    updateFilters();
+    renderEditMarkerForm(item);
 
 }
-
 
 // ==============================
 // Project Export / 匯出整個專案
