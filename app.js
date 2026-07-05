@@ -107,6 +107,14 @@ const gameMapImage =
 const mapSelect =
     document.getElementById("map-select");
 
+// 重新命名目前地圖的按鈕
+const renameMapBtn =
+    document.getElementById("rename-map-btn");
+
+// 刪除目前地圖的按鈕
+const deleteMapBtn =
+    document.getElementById("delete-map-btn");
+
 // 新增 marker 時輸入名稱的欄位
 const newMarkerNameInput =
     document.getElementById("new-marker-name");
@@ -585,12 +593,34 @@ function selectMarker(marker) {
  */
 function updateSidebar(item, isCollected) {
 
+    const imageHtml =
+        item.image
+            ? `
+                <img
+                    src="${item.image}"
+                    class="sidebar-image"
+                />
+            `
+            : "";
+
+    const wikiHtml =
+        item.wiki
+            ? `
+                <p>
+                    <a
+                        href="${item.wiki}"
+                        target="_blank"
+                        class="wiki-link"
+                    >
+                        Open Wiki
+                    </a>
+                </p>
+            `
+            : "";
+
     sidebarContent.innerHTML = `
 
-        <img
-            src="${item.image}"
-            class="sidebar-image"
-        />
+        ${imageHtml}
 
         <h3>${item.name}</h3>
 
@@ -605,7 +635,7 @@ function updateSidebar(item, isCollected) {
         </p>
 
         <p>
-            ${item.description}
+            ${item.description || ""}
         </p>
 
         <p>
@@ -623,19 +653,10 @@ function updateSidebar(item, isCollected) {
             X: ${item.x}, Y: ${item.y}
         </p>
 
-        <p>
-            <a
-                href="${item.wiki}"
-                target="_blank"
-                class="wiki-link"
-            >
-                Open Wiki
-            </a>
-        </p>
+        ${wikiHtml}
     `;
 
 }
-
 // ==============================
 // Marker Edit Form / Sidebar 編輯表單
 // ==============================
@@ -1740,6 +1761,12 @@ function loadSavedMapImage() {
 
         gameMapImage.src = savedMapImage;
 
+        // 上傳新地圖時重置縮放與位移
+        scale = 1;
+        translateX = 0;
+        translateY = 0;
+        updateMapTransform();
+
     }
 
 }
@@ -1765,6 +1792,16 @@ function loadSavedMapImage() {
  * 8. 重新渲染地圖下拉選單
  */
 function uploadMapImage(file) {
+
+    const maxSizeMB = 2;
+
+    if (file.size > maxSizeMB * 1024 * 1024) {
+
+        alert(`圖片過大. 請重新上傳小於 ${maxSizeMB}MB的圖片。`);
+
+        return;
+
+    }
 
     const reader =
         new FileReader();
@@ -1808,6 +1845,12 @@ function uploadMapImage(file) {
 
         // 顯示新地圖圖片
         gameMapImage.src = imageData;
+
+        // 上傳新地圖時重置縮放與位移
+        scale = 1;
+        translateX = 0;
+        translateY = 0;
+        updateMapTransform();
 
         // 新地圖一開始沒有自訂 marker
         customItems = [];
@@ -1863,6 +1906,150 @@ function renderMapSelect() {
 
 }
 
+// ==============================
+// Map Management / 地圖管理
+// ==============================
+
+/**
+ * 重新命名目前選取的地圖。
+ *
+ * 流程：
+ * 1. 找出 currentMapId 對應的地圖
+ * 2. prompt 輸入新名稱
+ * 3. 更新 maps 陣列
+ * 4. 保存 localStorage
+ * 5. 重新渲染地圖下拉選單
+ */
+function renameCurrentMap() {
+
+    const map =
+        maps.find(map =>
+            map.id === currentMapId
+        );
+
+    if (!map) {
+
+        alert("No map selected.");
+
+        return;
+
+    }
+
+    const newName =
+        prompt("New map name?", map.name);
+
+    if (!newName || !newName.trim()) {
+        return;
+    }
+
+    map.name =
+        newName.trim();
+
+    saveMaps();
+
+    renderMapSelect();
+
+}
+
+
+/**
+ * 刪除目前選取的地圖。
+ *
+ * 會刪除：
+ * 1. maps 陣列中的地圖資料
+ * 2. 該地圖的 customItems
+ * 3. 該地圖的 collectedState
+ *
+ * 如果刪除後還有其他地圖，就自動切到第一張。
+ * 如果沒有地圖了，就清空畫面。
+ */
+function deleteCurrentMap() {
+
+    const map =
+        maps.find(map =>
+            map.id === currentMapId
+        );
+
+    if (!map) {
+
+        alert("No map selected.");
+
+        return;
+
+    }
+
+    const confirmed =
+        confirm(`Delete map "${map.name}"?`);
+
+    if (!confirmed) {
+        return;
+    }
+
+    // 刪除這張地圖對應的 localStorage 資料
+    localStorage.removeItem(
+        `customItems_${currentMapId}`
+    );
+
+    localStorage.removeItem(
+        `collectedState_${currentMapId}`
+    );
+
+    // 從 maps 陣列移除目前地圖
+    maps =
+        maps.filter(map =>
+            map.id !== currentMapId
+        );
+
+    saveMaps();
+
+    // 清除畫面上的 marker
+    clearAllMarkersFromScreen();
+
+    selectedItem = null;
+    selectedMarker = null;
+    customItems = [];
+    pendingMarkerPosition = null;
+
+    sidebarContent.innerHTML =
+        "Click a marker...";
+
+    // 如果還有其他地圖，就切到第一張
+    if (maps.length > 0) {
+
+        currentMapId =
+            maps[0].id;
+
+        localStorage.setItem(
+            "currentMapId",
+            currentMapId
+        );
+
+        gameMapImage.src =
+            maps[0].image;
+
+        renderMapSelect();
+
+        loadItems();
+
+    }
+    else {
+
+        // 如果沒有任何地圖了，就清空 currentMapId 和圖片
+        currentMapId =
+            "default";
+
+        localStorage.removeItem("currentMapId");
+
+        gameMapImage.removeAttribute("src");
+
+        renderMapSelect();
+
+        updateProgress();
+        updateVisibleCount();
+
+    }
+
+}
 
 /**
  * 切換目前使用中的地圖。
@@ -2617,6 +2804,25 @@ mapSelect.addEventListener("change", () => {
         switchMap(mapSelect.value);
 
     }
+
+});
+
+/**
+ * 重新命名目前地圖。
+ */
+renameMapBtn.addEventListener("click", () => {
+
+    renameCurrentMap();
+
+});
+
+
+/**
+ * 刪除目前地圖。
+ */
+deleteMapBtn.addEventListener("click", () => {
+
+    deleteCurrentMap();
 
 });
 
