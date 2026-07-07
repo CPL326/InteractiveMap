@@ -360,6 +360,11 @@ body {
     flex: 1;
     padding: 6px;
 }
+
+#current-map-name {
+    font-weight: bold;
+    white-space: nowrap;
+}
 /*
 可合併
 #region-filter,

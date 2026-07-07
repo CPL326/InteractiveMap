@@ -131,6 +131,10 @@ const createMarkerBtn =
 const coordinateText =
     document.getElementById("coordinate-text");
 
+//顯示幕前的地圖名稱
+const currentMapNameText =
+    document.getElementById("current-map-name");    
+
 
 // ==============================
 // 資料狀態區
@@ -1904,6 +1908,8 @@ function renderMapSelect() {
 
     });
 
+    updateCurrentMapName();
+
 }
 
 // ==============================
@@ -2099,6 +2105,23 @@ function switchMap(mapId) {
 
     // 載入新地圖對應的 marker
     loadItems();
+
+    updateCurrentMapName();
+
+}
+
+//==============================
+// Map Name / 顯示目前地圖名稱
+// ==============================
+function updateCurrentMapName() {
+
+    const map =
+        maps.find(map =>
+            map.id === currentMapId
+        );
+
+    currentMapNameText.textContent =
+        map ? `Current Map: ${map.name}` : "Current Map: -";
 
 }
 
