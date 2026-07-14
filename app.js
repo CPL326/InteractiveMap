@@ -2923,6 +2923,20 @@ createMarkerBtn.addEventListener("click", () => {
     // 建立畫面上的 marker
     createMarker(newItem);
 
+    // 更新目前選取的 marker
+    const newMarker =
+    document.querySelector(
+        `.marker[data-id="${newItem.id}"]`
+    );
+
+    if (newMarker) {
+
+        selectMarker(newMarker);
+
+        updateSidebar(newItem, false);
+
+    }
+
     // 清空輸入框與暫存座標
     newMarkerNameInput.value = "";
     pendingMarkerPosition = null;
