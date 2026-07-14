@@ -119,6 +119,10 @@ const renameMapBtn =
 const deleteMapBtn =
     document.getElementById("delete-map-btn");
 
+// 重置地圖縮放與位移的按鈕
+const resetViewBtn =
+    document.getElementById("reset-view-btn");
+
 // 新增 marker 時輸入名稱的欄位
 const newMarkerNameInput =
     document.getElementById("new-marker-name");
@@ -1087,6 +1091,26 @@ function updateMapTransform() {
 
 }
 
+/**
+ * 重置地圖視角。
+ *
+ * 會把地圖恢復成：
+ * 1. 原始縮放比例
+ * 2. 原始 X 位移
+ * 3. 原始 Y 位移
+ */
+function resetMapView() {
+
+    scale = 1;
+
+    translateX = 0;
+
+    translateY = 0;
+
+    updateMapTransform();
+
+}
+
 
 // ==============================
 // Save / Reset 重置收集狀態
@@ -1837,10 +1861,7 @@ function loadSavedMapImage() {
         gameMapImage.src = savedMapImage;
 
         // 上傳新地圖時重置縮放與位移
-        scale = 1;
-        translateX = 0;
-        translateY = 0;
-        updateMapTransform();
+        resetMapView();
 
     }
 
@@ -1922,10 +1943,7 @@ function uploadMapImage(file) {
         gameMapImage.src = imageData;
 
         // 上傳新地圖時重置縮放與位移
-        scale = 1;
-        translateX = 0;
-        translateY = 0;
-        updateMapTransform();
+        resetMapView();
 
         // 新地圖一開始沒有自訂 marker
         customItems = [];
@@ -2929,6 +2947,14 @@ deleteMapBtn.addEventListener("click", () => {
 
 });
 
+/**
+ * 重置地圖縮放與位移，回到原始大小與位置。
+ */
+resetViewBtn.addEventListener("click", () => {
+
+    resetMapView();
+
+});
 
 // ==============================
 // Marker Drag / 拖曳 Marker
