@@ -87,6 +87,10 @@ const duplicateMarkerBtn =
 const clearSelectionBtn =
     document.getElementById("clear-selection-btn");
 
+// 複製目前選取 marker 的座標到剪貼簿的按鈕
+const copyCoordinatesBtn =
+    document.getElementById("copy-coordinates-btn");
+
 // 匯出整個地圖專案的按鈕，包含自訂 marker 與收集狀態
 const exportProjectBtn =
     document.getElementById("export-project-btn");
@@ -615,6 +619,61 @@ function clearSelection() {
 
     sidebarContent.innerHTML =
         "Click a marker...";
+
+}
+
+/**
+ * 複製目前選取 marker 的座標。
+ *
+ * 會把座標複製成：
+ * X,Y
+ *
+ * 例如：
+ * 120,350
+ */
+function copySelectedMarkerCoordinates() {
+
+    if (!selectedItem) {
+
+        alert("No marker selected");
+
+        return;
+
+    }
+
+    const marker =
+        document.querySelector(
+            `.marker[data-id="${selectedItem}"]`
+        );
+
+    if (!marker) {
+
+        alert("Selected marker not found");
+
+        return;
+
+    }
+
+    const x =
+        parseInt(marker.style.left);
+
+    const y =
+        parseInt(marker.style.top);
+
+    const coordinateText =
+        `${x},${y}`;
+
+    navigator.clipboard.writeText(coordinateText)
+        .then(() => {
+
+            alert(`Copied: ${coordinateText}`);
+
+        })
+        .catch(() => {
+
+            alert("Failed to copy coordinates.");
+
+        });
 
 }
 
@@ -2873,6 +2932,15 @@ duplicateMarkerBtn.addEventListener("click", () => {
 clearSelectionBtn.addEventListener("click", () => {
 
     clearSelection();
+
+});
+
+/**
+ * 複製目前選取的 marker 座標到剪貼簿。
+ */
+copyCoordinatesBtn.addEventListener("click", () => {
+
+    copySelectedMarkerCoordinates();
 
 });
 
