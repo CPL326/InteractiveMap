@@ -83,6 +83,10 @@ const editMarkerBtn =
 const duplicateMarkerBtn =
     document.getElementById("duplicate-marker-btn");
 
+// 清除目前選取 marker 的按鈕
+const clearSelectionBtn =
+    document.getElementById("clear-selection-btn");
+
 // 匯出整個地圖專案的按鈕，包含自訂 marker 與收集狀態
 const exportProjectBtn =
     document.getElementById("export-project-btn");
@@ -585,6 +589,32 @@ function selectMarker(marker) {
 
     // 加上 selected class，讓畫面上有高亮效果
     marker.classList.add("selected");
+
+}
+
+/**
+ * 清除目前選取的 marker。
+ *
+ * 會做：
+ * 1. 移除 marker 的 selected 樣式
+ * 2. 清空 selectedMarker
+ * 3. 清空 selectedItem
+ * 4. 重置 sidebar 顯示
+ */
+function clearSelection() {
+
+    if (selectedMarker) {
+
+        selectedMarker.classList.remove("selected");
+
+    }
+
+    selectedMarker = null;
+
+    selectedItem = null;
+
+    sidebarContent.innerHTML =
+        "Click a marker...";
 
 }
 
@@ -2834,6 +2864,15 @@ editMarkerBtn.addEventListener("click", () => {
 duplicateMarkerBtn.addEventListener("click", () => {
 
     duplicateSelectedMarker();
+
+});
+
+/**
+ * 清除目前選取的 marker。
+ */
+clearSelectionBtn.addEventListener("click", () => {
+
+    clearSelection();
 
 });
 
