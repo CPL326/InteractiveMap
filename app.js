@@ -147,6 +147,10 @@ const createMarkerBtn =
 const coordinateText =
     document.getElementById("coordinate-text");
 
+// 複製目前滑鼠在地圖上的座標到剪貼簿的按鈕
+const copyMousePositionBtn =
+    document.getElementById("copy-mouse-position-btn");
+
 //顯示幕前的地圖名稱
 const currentMapNameText =
     document.getElementById("current-map-name");    
@@ -215,6 +219,8 @@ let startY = 0;
 // 判斷剛剛是否真的拖曳過地圖，用來避免拖曳後誤觸 click
 let hasDragged = false;
 
+// 目前滑鼠在地圖上的座標位置，會隨著滑鼠移動而更新
+let currentMouseMapPosition = null;
 
 // ==============================
 // Marker 拖曳狀態區
@@ -677,6 +683,41 @@ function copySelectedMarkerCoordinates() {
 
 }
 
+/**
+ * 複製目前滑鼠在地圖上的座標。
+ *
+ * 會複製成：
+ * X,Y
+ *
+ * 例如：
+ * 320,180
+ */
+function copyCurrentMouseCoordinates() {
+
+    if (!currentMouseMapPosition) {
+
+        alert("Move your mouse over the map first.");
+
+        return;
+
+    }
+
+    const coordinateText =
+        `${currentMouseMapPosition.x},${currentMouseMapPosition.y}`;
+
+    navigator.clipboard.writeText(coordinateText)
+        .then(() => {
+
+            alert(`Copied last map position: ${coordinateText}`);
+
+        })
+        .catch(() => {
+
+            alert("Failed to copy coordinates.");
+
+        });
+
+}
 
 /**
  * 更新右側 Sidebar 的 marker 詳細資訊。
@@ -2944,6 +2985,14 @@ copyCoordinatesBtn.addEventListener("click", () => {
 
 });
 
+/**
+ * 複製目前滑鼠在地圖上的座標到剪貼簿。
+ */
+copyMousePositionBtn.addEventListener("click", () => {
+
+    copyCurrentMouseCoordinates();
+
+});
 
 // ==============================
 // Project Import / Export 事件
@@ -3174,6 +3223,8 @@ mapViewport.addEventListener("mousemove", (event) => {
 
     const position =
         getMapCoordinates(event);
+
+    currentMouseMapPosition = position;
 
     coordinateText.textContent =
         `X: ${position.x}, Y: ${position.y}`;
