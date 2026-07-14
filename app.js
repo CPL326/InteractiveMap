@@ -79,6 +79,10 @@ const deleteMarkerBtn =
 const editMarkerBtn =
     document.getElementById("edit-marker-btn");
 
+// 複製目前選取 marker 的按鈕    
+const duplicateMarkerBtn =
+    document.getElementById("duplicate-marker-btn");
+
 // 匯出整個地圖專案的按鈕，包含自訂 marker 與收集狀態
 const exportProjectBtn =
     document.getElementById("export-project-btn");
@@ -1463,6 +1467,73 @@ function editSelectedMarker() {
 
 }
 
+/**
+ * 複製目前選取的 marker。
+ *
+ * 目前只允許複製 custom marker。
+ * 複製後的新 marker 會：
+ * 1. 產生新的 id
+ * 2. 名稱後面加上 Copy
+ * 3. 座標稍微往右下偏移
+ * 4. 保存到 customItems
+ * 5. 建立到畫面上
+ */
+function duplicateSelectedMarker() {
+
+    if (!selectedItem) {
+
+        alert("No marker selected");
+
+        return;
+
+    }
+
+    const sourceItem =
+        customItems.find(item =>
+            item.id === selectedItem
+        );
+
+    if (!sourceItem) {
+
+        alert("Only custom markers can be duplicated");
+
+        return;
+
+    }
+
+    const newItem = {
+        ...sourceItem,
+        id: "custom_" + Date.now(),
+        name: sourceItem.name + " Copy",
+        x: sourceItem.x + 20,
+        y: sourceItem.y + 20
+    };
+
+    customItems.push(newItem);
+
+    saveCustomItems();
+
+    createMarker(newItem);
+
+    updateProgress();
+    updateFilters();
+    updateVisibleCount();
+
+    const newMarker =
+        document.querySelector(
+            `.marker[data-id="${newItem.id}"]`
+        );
+
+    if (newMarker) {
+
+        selectMarker(newMarker);
+
+        updateSidebar(newItem, false);
+
+    }
+
+}
+
 // ==============================
 // Project Export / 匯出整個專案
 // ==============================
@@ -2736,6 +2807,15 @@ deleteMarkerBtn.addEventListener("click", () => {
 editMarkerBtn.addEventListener("click", () => {
 
     editSelectedMarker();
+
+});
+
+/**
+ * 複製目前選取的 marker。
+ */
+duplicateMarkerBtn.addEventListener("click", () => {
+
+    duplicateSelectedMarker();
 
 });
 
