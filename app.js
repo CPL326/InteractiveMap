@@ -147,10 +147,6 @@ const createMarkerBtn =
 const coordinateText =
     document.getElementById("coordinate-text");
 
-// 複製目前滑鼠在地圖上的座標到剪貼簿的按鈕
-const copyMousePositionBtn =
-    document.getElementById("copy-mouse-position-btn");
-
 //顯示幕前的地圖名稱
 const currentMapNameText =
     document.getElementById("current-map-name");    
@@ -218,9 +214,6 @@ let startY = 0;
 
 // 判斷剛剛是否真的拖曳過地圖，用來避免拖曳後誤觸 click
 let hasDragged = false;
-
-// 目前滑鼠在地圖上的座標位置，會隨著滑鼠移動而更新
-let currentMouseMapPosition = null;
 
 // ==============================
 // Marker 拖曳狀態區
@@ -683,41 +676,7 @@ function copySelectedMarkerCoordinates() {
 
 }
 
-/**
- * 複製目前滑鼠在地圖上的座標。
- *
- * 會複製成：
- * X,Y
- *
- * 例如：
- * 320,180
- */
-function copyCurrentMouseCoordinates() {
 
-    if (!currentMouseMapPosition) {
-
-        alert("Move your mouse over the map first.");
-
-        return;
-
-    }
-
-    const coordinateText =
-        `${currentMouseMapPosition.x},${currentMouseMapPosition.y}`;
-
-    navigator.clipboard.writeText(coordinateText)
-        .then(() => {
-
-            alert(`Copied last map position: ${coordinateText}`);
-
-        })
-        .catch(() => {
-
-            alert("Failed to copy coordinates.");
-
-        });
-
-}
 
 /**
  * 更新右側 Sidebar 的 marker 詳細資訊。
@@ -1149,8 +1108,21 @@ function importSave(file) {
     reader.onload = (event) => {
 
         // 將讀到的 JSON 字串轉成 JS object
-        const saveData =
-            JSON.parse(event.target.result);
+        let saveData;
+
+        try {
+
+            saveData =
+                JSON.parse(event.target.result);
+
+        }
+        catch (error) {
+
+            alert("Invalid save file. Please import a valid JSON file.");
+
+            return;
+
+        }
 
         // 取得畫面上的所有 marker
         const allMarkers =
@@ -1842,9 +1814,21 @@ function importProject(file) {
     reader.onload = (event) => {
 
         // 將 JSON 字串轉成 JS object
-        const projectData =
-            JSON.parse(event.target.result);
+        let projectData;
 
+        try {
+
+            projectData =
+                JSON.parse(event.target.result);
+
+        }
+        catch (error) {
+
+            alert("Invalid project file. Please import a valid JSON file.");
+
+            return;
+
+        }
         // 先清除目前畫面上的自訂 marker
         clearCustomMarkersFromScreen();
 
@@ -2260,8 +2244,8 @@ function deleteCurrentMap() {
     else {
 
         // 如果沒有任何地圖了，就清空 currentMapId 和圖片
-        currentMapId =
-            "default";
+         currentMapId =
+        "default";
 
         localStorage.removeItem("currentMapId");
 
@@ -2269,8 +2253,7 @@ function deleteCurrentMap() {
 
         renderMapSelect();
 
-        updateProgress();
-        updateVisibleCount();
+        updateEmptyState();
 
     }
 
@@ -2446,6 +2429,9 @@ async function init() {
     // 載入目前地圖的 marker
     await loadItems();
 
+    // 更新空狀態提示
+    updateEmptyState();
+
 }
 
 // ==============================
@@ -2488,6 +2474,26 @@ function getMapCoordinates(event) {
         x: Math.round(x),
         y: Math.round(y)
     };
+
+}
+
+/**
+    * 更新畫面上沒有地圖時的提示訊息。
+ */
+function updateEmptyState() {
+
+    if (maps.length > 0) {
+        return;
+    }
+
+    sidebarContent.innerHTML =
+        "No map selected. Upload a map to start.";
+
+    progressText.textContent =
+        "Collected: 0 / 0";
+
+    visibleCountText.textContent =
+        "Showing: 0 / 0";
 
 }
 
@@ -2999,14 +3005,6 @@ copyCoordinatesBtn.addEventListener("click", () => {
 
 });
 
-/**
- * 複製目前滑鼠在地圖上的座標到剪貼簿。
- */
-copyMousePositionBtn.addEventListener("click", () => {
-
-    copyCurrentMouseCoordinates();
-
-});
 
 // ==============================
 // Project Import / Export 事件
@@ -3237,8 +3235,6 @@ mapViewport.addEventListener("mousemove", (event) => {
 
     const position =
         getMapCoordinates(event);
-
-    currentMouseMapPosition = position;
 
     coordinateText.textContent =
         `X: ${position.x}, Y: ${position.y}`;
