@@ -1697,8 +1697,23 @@ function exportProject() {
 
     });
 
+    // 找出目前選取的地圖資料
+    const currentMap =
+    maps.find(map =>
+        map.id === currentMapId
+    );
+
+    if (!currentMap) {
+
+        alert("No map selected.");
+
+        return;
+
+    }
+
     // 組合要匯出的專案資料
     const projectData = {
+        map: currentMap,
         customItems: customItems,
         collectedState: collectedState
     };
@@ -1807,13 +1822,11 @@ function clearAllMarkersFromScreen() {
  */
 function importProject(file) {
 
-    // 建立 FileReader 讀取使用者選擇的檔案
     const reader =
         new FileReader();
 
     reader.onload = (event) => {
 
-        // 將 JSON 字串轉成 JS object
         let projectData;
 
         try {
@@ -1829,69 +1842,73 @@ function importProject(file) {
             return;
 
         }
-        // 先清除目前畫面上的自訂 marker
-        clearCustomMarkersFromScreen();
 
-        // 使用匯入檔案中的 customItems
-        // 如果沒有 customItems，就給空陣列
+        if (!projectData.map || !projectData.map.image) {
+
+            alert("Invalid project file. Missing map data.");
+
+            return;
+
+        }
+
+        const importedMap =
+            projectData.map;
+
+        const newMapId =
+            "map_" + Date.now();
+
+        const newMap = {
+            id: newMapId,
+            name: importedMap.name + " Imported",
+            image: importedMap.image
+        };
+
+        maps.push(newMap);
+
+        saveMaps();
+
+        currentMapId =
+            newMapId;
+
+        localStorage.setItem(
+            "currentMapId",
+            currentMapId
+        );
+
+        gameMapImage.src =
+            newMap.image;
+
+        resetMapView();
+
+        clearAllMarkersFromScreen();
+
         customItems =
             projectData.customItems || [];
 
-        // 保存匯入後的 customItems 到目前地圖的 localStorage
         saveCustomItems();
 
-        // 重新建立自訂 marker
-        customItems.forEach(item => {
-
-            createMarker(item);
-
-        });
-
-        // 取得匯入檔案中的 collectedState
         const collectedState =
             projectData.collectedState || {};
 
-        // 取得畫面上的所有 marker
-        const allMarkers =
-            document.querySelectorAll(".marker");
+        localStorage.setItem(
+            `collectedState_${currentMapId}`,
+            JSON.stringify(collectedState)
+        );
 
-        allMarkers.forEach(marker => {
+        renderMapSelect();
 
-            const markerId =
-                marker.dataset.id;
+        loadItems();
 
-            const isCollected =
-                collectedState[markerId];
+        clearSelection();
 
-            // 根據匯入的狀態套用 collected class
-            if (isCollected) {
-                marker.classList.add("collected");
-            }
-            else {
-                marker.classList.remove("collected");
-            }
-
-            // 保存這個 marker 的收集狀態到目前地圖對應的 localStorage
-            saveCollectedState(markerId, isCollected);
-
-        });
-
-        // 清空目前選取狀態
-        selectedItem = null;
-        selectedMarker = null;
-
-        // 重置 sidebar
-        sidebarContent.innerHTML =
-            "Click a marker...";
-
-        // 更新畫面
         updateProgress();
+
         updateFilters();
+
         updateVisibleCount();
 
     };
 
-    // 以文字方式讀取 JSON 檔案
     reader.readAsText(file);
 
 }
