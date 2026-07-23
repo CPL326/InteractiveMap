@@ -1865,7 +1865,19 @@ function importProject(file) {
 
         maps.push(newMap);
 
-        saveMaps();
+        const savedSuccessfully =
+            saveMaps();
+
+        if (!savedSuccessfully) {
+
+            maps =
+                maps.filter(map =>
+                    map.id !== newMapId
+                );
+
+            return;
+
+        }
 
         currentMapId =
             newMapId;
@@ -1946,10 +1958,34 @@ function loadMaps() {
  */
 function saveMaps() {
 
-    localStorage.setItem(
-        "maps",
-        JSON.stringify(maps)
-    );
+    try {
+
+        localStorage.setItem(
+            "maps",
+            JSON.stringify(maps)
+        );
+
+        return true;
+
+    }
+    catch (error) {
+
+        if (error.name === "QuotaExceededError") {
+
+            alert(
+                "Storage is full. The map image may be too large. Please delete unused maps or upload a smaller image."
+            );
+
+        }
+        else {
+
+            alert("Failed to save maps.");
+
+        }
+
+        return false;
+
+    }
 
 }
 
@@ -2061,10 +2097,23 @@ function uploadMapImage(file) {
         // 加入地圖清單
         maps.push(newMap);
 
-        // 保存地圖清單
-        saveMaps();
+        const savedSuccessfully =
+            saveMaps();
 
-        // 保存目前使用中的地圖 id
+        if (!savedSuccessfully) {
+
+            maps =
+                maps.filter(map =>
+                    map.id !== currentMapId
+                );
+
+            currentMapId =
+                localStorage.getItem("currentMapId") || "default";
+
+            return;
+
+        }
+
         localStorage.setItem(
             "currentMapId",
             currentMapId
