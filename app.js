@@ -1105,64 +1105,81 @@ function importSave(file) {
         new FileReader();
 
     // 當檔案讀取完成後會執行這段
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
 
-        // 將讀到的 JSON 字串轉成 JS object
-        let saveData;
+    const imageData =
+        event.target.result;
 
-        try {
+    const mapName =
+        prompt("Map name?", file.name);
 
-            saveData =
-                JSON.parse(event.target.result);
+    if (!mapName) {
+        return;
+    }
 
-        }
-        catch (error) {
+    currentMapId =
+        "map_" + Date.now();
 
-            alert("Invalid save file. Please import a valid JSON file.");
-
-            return;
-
-        }
-
-        // 取得畫面上的所有 marker
-        const allMarkers =
-            document.querySelectorAll(".marker");
-
-        allMarkers.forEach(marker => {
-
-            // 取得 marker id
-            const markerId =
-                marker.dataset.id;
-
-            // 從匯入資料中找出該 marker 是否已收集
-            const isCollected =
-                saveData[markerId];
-
-            // 根據匯入狀態加上或移除 collected class
-            if (isCollected) {
-
-                marker.classList.add("collected");
-
-            }
-            else {
-
-                marker.classList.remove("collected");
-
-            }
-
-            // 同步保存到目前地圖的 localStorage
-            saveCollectedState(markerId, isCollected);
-
-        });
-
-        // 匯入完成後更新收集進度
-        updateProgress();
-
-        // 匯入後如果有開啟 Hide Collected，需要重新套用篩選
-        updateFilters();
-
+    const newMap = {
+        id: currentMapId,
+        name: mapName,
+        imageKey: currentMapId
     };
 
+    try {
+
+        await saveMapImage(newMap.imageKey, imageData);
+
+    }
+    catch (error) {
+
+        alert("Failed to save map image.");
+
+        return;
+
+    }
+
+    maps.push(newMap);
+
+    const savedSuccessfully =
+        saveMaps();
+
+    if (!savedSuccessfully) {
+
+        await deleteMapImage(newMap.imageKey);
+
+        maps =
+            maps.filter(map =>
+                map.id !== currentMapId
+            );
+
+        currentMapId =
+            localStorage.getItem("currentMapId") || "default";
+
+        return;
+
+    }
+
+    localStorage.setItem(
+        "currentMapId",
+        currentMapId
+    );
+
+    gameMapImage.src =
+        imageData;
+
+    resetMapView();
+
+    customItems = [];
+    saveCustomItems();
+
+    clearAllMarkersFromScreen();
+
+    renderMapSelect();
+
+    loadItems();
+
+};
     // 以文字方式讀取檔案
     reader.readAsText(file);
 
@@ -1990,6 +2007,162 @@ function saveMaps() {
 }
 
 // ==============================
+// IndexedDB / 地圖圖片儲存
+// ==============================
+
+const mapImageDbName = "InteractiveMapDB";
+const mapImageStoreName = "mapImages";
+
+/**
+ * 開啟 IndexedDB。
+ *
+ * IndexedDB 用來存比較大的資料，例如地圖圖片。
+ */
+function openMapImageDb() {
+
+    return new Promise((resolve, reject) => {
+
+        const request =
+            indexedDB.open(mapImageDbName, 1);
+
+        request.onupgradeneeded = (event) => {
+
+            const db =
+                event.target.result;
+
+            if (!db.objectStoreNames.contains(mapImageStoreName)) {
+
+                db.createObjectStore(mapImageStoreName);
+
+            }
+
+        };
+
+        request.onsuccess = (event) => {
+
+            resolve(event.target.result);
+
+        };
+
+        request.onerror = () => {
+
+            reject(request.error);
+
+        };
+
+    });
+
+}
+
+
+/**
+ * 儲存地圖圖片到 IndexedDB。
+ */
+async function saveMapImage(imageKey, imageData) {
+
+    const db =
+        await openMapImageDb();
+
+    return new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(mapImageStoreName, "readwrite");
+
+        const store =
+            transaction.objectStore(mapImageStoreName);
+
+        const request =
+            store.put(imageData, imageKey);
+
+        request.onsuccess = () => {
+
+            resolve();
+
+        };
+
+        request.onerror = () => {
+
+            reject(request.error);
+
+        };
+
+    });
+
+}
+
+
+/**
+ * 從 IndexedDB 讀取地圖圖片。
+ */
+async function loadMapImage(imageKey) {
+
+    const db =
+        await openMapImageDb();
+
+    return new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(mapImageStoreName, "readonly");
+
+        const store =
+            transaction.objectStore(mapImageStoreName);
+
+        const request =
+            store.get(imageKey);
+
+        request.onsuccess = () => {
+
+            resolve(request.result);
+
+        };
+
+        request.onerror = () => {
+
+            reject(request.error);
+
+        };
+
+    });
+
+}
+
+
+/**
+ * 從 IndexedDB 刪除地圖圖片。
+ */
+async function deleteMapImage(imageKey) {
+
+    const db =
+        await openMapImageDb();
+
+    return new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(mapImageStoreName, "readwrite");
+
+        const store =
+            transaction.objectStore(mapImageStoreName);
+
+        const request =
+            store.delete(imageKey);
+
+        request.onsuccess = () => {
+
+            resolve();
+
+        };
+
+        request.onerror = () => {
+
+            reject(request.error);
+
+        };
+
+    });
+
+}
+
+// ==============================
 // Map Image / 舊版單一地圖圖片載入
 // ==============================
 
@@ -2091,7 +2264,7 @@ function uploadMapImage(file) {
         const newMap = {
             id: currentMapId,
             name: mapName,
-            image: imageData
+            imageKey: currentMapId
         };
 
         // 加入地圖清單
@@ -2238,7 +2411,7 @@ function renameCurrentMap() {
  * 如果刪除後還有其他地圖，就自動切到第一張。
  * 如果沒有地圖了，就清空畫面。
  */
-function deleteCurrentMap() {
+async function deleteCurrentMap() {
 
     const map =
         maps.find(map =>
@@ -2252,6 +2425,9 @@ function deleteCurrentMap() {
         return;
 
     }
+
+    const imageKey =
+        map.imageKey;
 
     const confirmed =
         confirm(`Delete map "${map.name}"?`);
@@ -2269,6 +2445,9 @@ function deleteCurrentMap() {
         `collectedState_${currentMapId}`
     );
 
+    // 刪除這張地圖對應的 IndexedDB 圖片
+    await deleteMapImage(imageKey);
+
     // 從 maps 陣列移除目前地圖
     maps =
         maps.filter(map =>
@@ -2277,7 +2456,7 @@ function deleteCurrentMap() {
 
     saveMaps();
 
-    // 清除畫面上的 marker
+    // 清除畫面上的 marker 與編輯狀態
     clearAllMarkersFromScreen();
 
     selectedItem = null;
@@ -2299,8 +2478,24 @@ function deleteCurrentMap() {
             currentMapId
         );
 
-        gameMapImage.src =
-            maps[0].image;
+        const imageData =
+            await loadMapImage(maps[0].imageKey);
+
+        if (imageData) {
+
+            gameMapImage.src =
+                imageData;
+
+        }
+        else {
+
+            gameMapImage.removeAttribute("src");
+
+            alert("Map image not found.");
+
+        }
+
+        resetMapView();
 
         renderMapSelect();
 
@@ -2309,9 +2504,8 @@ function deleteCurrentMap() {
     }
     else {
 
-        // 如果沒有任何地圖了，就清空 currentMapId 和圖片
-         currentMapId =
-        "default";
+        currentMapId =
+            "default";
 
         localStorage.removeItem("currentMapId");
 
@@ -2339,42 +2533,45 @@ function deleteCurrentMap() {
  * 5. 清除畫面上舊 marker
  * 6. 載入新地圖的 marker
  */
-function switchMap(mapId) {
+async function switchMap(mapId) {
 
     const map =
-        maps.find(map => map.id === mapId);
+        maps.find(map =>
+            map.id === mapId
+        );
 
     if (!map) {
         return;
     }
 
-    // 更新目前地圖 id
     currentMapId = map.id;
 
-    // 保存目前地圖 id
     localStorage.setItem(
         "currentMapId",
         currentMapId
     );
 
-    // 顯示選到的地圖圖片
-    gameMapImage.src = map.image;
+    const imageData =
+        await loadMapImage(map.imageKey);
 
-    // 清空目前選取狀態
-    selectedItem = null;
-    selectedMarker = null;
+    if (!imageData) {
 
-    // 重置 sidebar
-    sidebarContent.innerHTML =
-        "Click a marker...";
+        alert("Map image not found.");
 
-    // 清除目前畫面上的 marker
+        return;
+
+    }
+
+    gameMapImage.src =
+        imageData;
+
+    resetMapView();
+
+    clearSelection();
+
     clearAllMarkersFromScreen();
 
-    // 載入新地圖對應的 marker
     loadItems();
-
-    updateCurrentMapName();
 
 }
 
@@ -2489,7 +2686,17 @@ async function init() {
 
     // 如果有找到目前地圖，就顯示它的圖片
     if (currentMap) {
-        gameMapImage.src = currentMap.image;
+
+        const imageData =
+            await loadMapImage(currentMap.imageKey);
+
+        if (imageData) {
+
+            gameMapImage.src =
+                imageData;
+
+        }
+
     }
 
     // 載入目前地圖的 marker
