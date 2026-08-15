@@ -1100,87 +1100,74 @@ function exportSave() {
  */
 function importSave(file) {
 
-    // 建立 FileReader，用來讀取使用者選擇的本機檔案
     const reader =
         new FileReader();
 
-    // 當檔案讀取完成後會執行這段
-    reader.onload = async (event) => {
+    reader.onload = (event) => {
 
-    const imageData =
-        event.target.result;
+        let saveData;
 
-    const mapName =
-        prompt("Map name?", file.name);
+        try {
 
-    if (!mapName) {
-        return;
-    }
+            saveData =
+                JSON.parse(event.target.result);
 
-    currentMapId =
-        "map_" + Date.now();
+        }
+        catch (error) {
 
-    const newMap = {
-        id: currentMapId,
-        name: mapName,
-        imageKey: currentMapId
-    };
+            alert("Invalid save file. Please import a valid JSON file.");
+            return;
 
-    try {
+        }
 
-        await saveMapImage(newMap.imageKey, imageData);
+        if (!saveData || Array.isArray(saveData) || typeof saveData !== "object") {
 
-    }
-    catch (error) {
+            alert("Invalid save file format.");
+            return;
 
-        alert("Failed to save map image.");
+        }
 
-        return;
-
-    }
-
-    maps.push(newMap);
-
-    const savedSuccessfully =
-        saveMaps();
-
-    if (!savedSuccessfully) {
-
-        await deleteMapImage(newMap.imageKey);
-
-        maps =
-            maps.filter(map =>
-                map.id !== currentMapId
+        const validMarkerIds =
+            new Set(
+                Array.from(document.querySelectorAll(".marker"))
+                    .map(marker => marker.dataset.id)
+                    .filter(Boolean)
             );
 
-        currentMapId =
-            localStorage.getItem("currentMapId") || "default";
+        const collectedState = {};
 
-        return;
+        Object.entries(saveData).forEach(([markerId, isCollected]) => {
 
-    }
+            if (validMarkerIds.has(markerId) && typeof isCollected === "boolean") {
 
-    localStorage.setItem(
-        "currentMapId",
-        currentMapId
-    );
+                collectedState[markerId] =
+                    isCollected;
 
-    gameMapImage.src =
-        imageData;
+            }
 
-    resetMapView();
+        });
 
-    customItems = [];
-    saveCustomItems();
+        localStorage.setItem(
+            `collectedState_${currentMapId}`,
+            JSON.stringify(collectedState)
+        );
 
-    clearAllMarkersFromScreen();
+        document.querySelectorAll(".marker").forEach(marker => {
 
-    renderMapSelect();
+            marker.classList.toggle(
+                "collected",
+                collectedState[marker.dataset.id] === true
+            );
 
-    loadItems();
+        });
 
-};
-    // 以文字方式讀取檔案
+        clearSelection();
+        updateProgress();
+        updateFilters();
+        updateVisibleCount();
+
+    };
+
     reader.readAsText(file);
 
 }
@@ -1681,87 +1668,119 @@ function duplicateSelectedMarker() {
 // Project Export / 匯出整個專案
 // ==============================
 
+const projectFormat = "interactive-map-project";
+const projectVersion = 1;
+
 /**
- * 匯出目前地圖專案資料。
- *
- * 目前匯出的內容包含：
- * 1. customItems：使用者自訂 marker 清單
- * 2. collectedState：目前所有 marker 的收集狀態
- *
- * 注意：
- * 目前這個版本還沒有匯出 maps / markerTypes。
- * 所以比較像「目前地圖的 marker 專案」，
- * 還不是完整的多地圖專案備份。
+ * 安全地從 localStorage 讀取 JSON。
+ * 資料不存在或格式錯誤時回傳 fallback。
  */
-function exportProject() {
+function readLocalJson(key, fallback) {
 
-    // 建立一份 collectedState，用來記錄每個 marker 是否已收集
-    const collectedState = {};
+    const saved =
+        localStorage.getItem(key);
 
-    // 取得畫面上的所有 marker
-    const allMarkers =
-        document.querySelectorAll(".marker");
+    if (!saved) {
+        return fallback;
+    }
 
-    allMarkers.forEach(marker => {
+    try {
+        return JSON.parse(saved);
+    }
+    catch (error) {
+        console.warn(`Invalid JSON in localStorage: ${key}`, error);
+        return fallback;
+    }
 
-        // 取得 marker id
-        const markerId =
-            marker.dataset.id;
+}
 
-        // 記錄該 marker 是否有 collected class
-        collectedState[markerId] =
-            marker.classList.contains("collected");
+/**
+ * 匯出完整多地圖專案。
+ *
+ * 每一張 map 都會包含：
+ * - map metadata
+ * - IndexedDB 裡的地圖圖片
+ * - customItems
+ * - collectedState
+ *
+ * 圖片在匯出檔內使用 Data URL 保存，
+ * Import 時再重新寫回 IndexedDB。
+ */
+async function exportProject() {
 
-    });
-
-    // 找出目前選取的地圖資料
-    const currentMap =
-    maps.find(map =>
-        map.id === currentMapId
-    );
-
-    if (!currentMap) {
-
-        alert("No map selected.");
-
+    if (maps.length === 0) {
+        alert("There are no maps to export.");
         return;
+    }
+
+    const exportedMaps = [];
+    const missingImages = [];
+
+    for (const map of maps) {
+
+        const imageData =
+            await loadMapImage(map.imageKey);
+
+        if (!imageData) {
+            missingImages.push(map.name || map.id);
+            continue;
+        }
+
+        exportedMaps.push({
+            id: map.id,
+            name: map.name,
+            imageData: imageData,
+            customItems: readLocalJson(
+                `customItems_${map.id}`,
+                []
+            ),
+            collectedState: readLocalJson(
+                `collectedState_${map.id}`,
+                {}
+            )
+        });
 
     }
 
-    // 組合要匯出的專案資料
+    // 完整 Project Backup 不應默默漏掉某張地圖。
+    if (missingImages.length > 0) {
+
+        alert(
+            "Project export cancelled because some map images are missing:\n\n" +
+            missingImages.join("\n") +
+            "\n\nDelete or repair those maps before exporting again."
+        );
+
+        return;
+    }
+
     const projectData = {
-        map: currentMap,
-        customItems: customItems,
-        collectedState: collectedState
+        format: projectFormat,
+        version: projectVersion,
+        exportedAt: new Date().toISOString(),
+        currentMapId: currentMapId,
+        markerTypes: markerTypes,
+        maps: exportedMaps
     };
 
-    // 將 JS object 轉成 JSON 字串
     const jsonString =
         JSON.stringify(projectData, null, 2);
 
-    // 建立可下載的 JSON 檔案內容
     const blob =
         new Blob([jsonString], {
             type: "application/json"
         });
 
-    // 建立暫時下載網址
     const url =
         URL.createObjectURL(blob);
 
-    // 建立暫時 a 標籤，用來觸發下載
     const a =
         document.createElement("a");
 
     a.href = url;
-
-    // 設定下載檔名
-    a.download = "map-project.json";
-
-    // 觸發下載
+    a.download = "interactive-map-project.json";
     a.click();
 
-    // 釋放暫時網址
     URL.revokeObjectURL(url);
 
 }
@@ -1824,124 +1843,283 @@ function clearAllMarkersFromScreen() {
 // ==============================
 
 /**
- * 匯入地圖專案資料。
- *
- * file：
- * 來自 input[type="file"] 選到的 JSON 檔案。
- *
- * 流程：
- * 1. 讀取 JSON 檔
- * 2. 清除畫面上的舊 custom marker
- * 3. 套用匯入的 customItems
- * 4. 重新建立 custom marker
- * 5. 套用 collectedState
- * 6. 更新畫面統計與篩選
+ * 驗證 Project v1 的基本結構。
  */
-function importProject(file) {
+function validateProjectData(projectData) {
 
-    const reader =
-        new FileReader();
+    if (!projectData || typeof projectData !== "object") {
+        return "Invalid project data.";
+    }
 
-    reader.onload = (event) => {
+    if (projectData.format !== projectFormat) {
+        return "Unsupported project format.";
+    }
 
-        let projectData;
+    if (projectData.version !== projectVersion) {
+        return `Unsupported project version: ${projectData.version}`;
+    }
 
-        try {
+    if (!Array.isArray(projectData.maps)) {
+        return "Project is missing maps.";
+    }
 
-            projectData =
-                JSON.parse(event.target.result);
+    if (projectData.maps.length === 0) {
+        return "Project contains no maps.";
+    }
+
+    const ids = new Set();
+
+    for (const map of projectData.maps) {
+
+        if (!map || typeof map !== "object") {
+            return "Project contains invalid map data.";
+        }
+
+        if (!map.id || !map.name || !map.imageData) {
+            return "A map is missing id, name, or image data.";
+        }
+
+        if (ids.has(map.id)) {
+            return `Duplicate map id found: ${map.id}`;
+        }
+
+        ids.add(map.id);
+
+        if (map.customItems !== undefined &&
+            !Array.isArray(map.customItems)) {
+            return `Invalid customItems for map: ${map.name}`;
+        }
+
+        if (map.collectedState !== undefined &&
+            (typeof map.collectedState !== "object" ||
+             map.collectedState === null ||
+             Array.isArray(map.collectedState))) {
+            return `Invalid collectedState for map: ${map.name}`;
+        }
+
+    }
+
+    return null;
+
+}
+
+/**
+ * 匯入完整 Project v1。
+ *
+ * Import 會還原整個多地圖專案，而不是只增加一張地圖。
+ * 為避免覆蓋失敗造成資料遺失：
+ * 1. 先驗證 JSON
+ * 2. 先用新的 id / imageKey 寫入所有圖片
+ * 3. 先保存新的 localStorage 資料
+ * 4. 成功後才清除舊專案資料
+ */
+async function importProject(file) {
+
+    let projectData;
+
+    try {
+
+        const text =
+            await file.text();
+
+        projectData =
+            JSON.parse(text);
+
+    }
+    catch (error) {
+
+        alert("Invalid project file. Please import a valid JSON file.");
+        return;
+
+    }
+
+    const validationError =
+        validateProjectData(projectData);
+
+    if (validationError) {
+        alert(validationError);
+        return;
+    }
+
+    const confirmed =
+        confirm(
+            "Importing this project will replace the maps currently stored in this browser. Continue?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const oldMaps =
+        [...maps];
+
+    const importedMaps = [];
+    const importedMapIdLookup = new Map();
+    const createdImageKeys = [];
+
+    try {
+
+        // 先建立新 maps 並寫入所有圖片。
+        // 使用新 id，避免和目前 IndexedDB 裡的 key 發生碰撞。
+        for (let index = 0; index < projectData.maps.length; index++) {
+
+            const sourceMap =
+                projectData.maps[index];
+
+            const newMapId =
+                `map_${Date.now()}_${index}_${Math.random().toString(36).slice(2, 8)}`;
+
+            const newMap = {
+                id: newMapId,
+                name: sourceMap.name,
+                imageKey: newMapId
+            };
+
+            await saveMapImage(
+                newMap.imageKey,
+                sourceMap.imageData
+            );
+
+            createdImageKeys.push(newMap.imageKey);
+            importedMaps.push(newMap);
+            importedMapIdLookup.set(sourceMap.id, newMapId);
+
+            localStorage.setItem(
+                `customItems_${newMapId}`,
+                JSON.stringify(sourceMap.customItems || [])
+            );
+
+            localStorage.setItem(
+                `collectedState_${newMapId}`,
+                JSON.stringify(sourceMap.collectedState || {})
+            );
 
         }
-        catch (error) {
 
-            alert("Invalid project file. Please import a valid JSON file.");
+        // 先切換並保存新 maps。
+        maps = importedMaps;
 
-            return;
-
+        if (!saveMaps()) {
+            throw new Error("Failed to save imported maps.");
         }
 
-        if (!projectData.map || !projectData.map.image) {
-
-            alert("Invalid project file. Missing map data.");
-
-            return;
-
-        }
-
-        const importedMap =
-            projectData.map;
-
-        const newMapId =
-            "map_" + Date.now();
-
-        const newMap = {
-            id: newMapId,
-            name: importedMap.name + " Imported",
-            image: importedMap.image
-        };
-
-        maps.push(newMap);
-
-        const savedSuccessfully =
-            saveMaps();
-
-        if (!savedSuccessfully) {
-
-            maps =
-                maps.filter(map =>
-                    map.id !== newMapId
-                );
-
-            return;
-
-        }
+        const importedCurrentMapId =
+            importedMapIdLookup.get(projectData.currentMapId);
 
         currentMapId =
-            newMapId;
+            importedCurrentMapId || importedMaps[0].id;
 
         localStorage.setItem(
             "currentMapId",
             currentMapId
         );
 
-        gameMapImage.src =
-            newMap.image;
+        // 新專案已成功保存後，再清理舊專案。
+        for (const oldMap of oldMaps) {
 
-        resetMapView();
+            localStorage.removeItem(
+                `customItems_${oldMap.id}`
+            );
 
-        clearAllMarkersFromScreen();
+            localStorage.removeItem(
+                `collectedState_${oldMap.id}`
+            );
 
-        customItems =
-            projectData.customItems || [];
+            try {
+                await deleteMapImage(oldMap.imageKey);
+            }
+            catch (cleanupError) {
+                // 舊圖片清理失敗不應讓已成功匯入的新專案回滾。
+                console.warn(
+                    `Failed to delete old map image: ${oldMap.name}`,
+                    cleanupError
+                );
+            }
 
-        saveCustomItems();
+        }
 
-        const collectedState =
-            projectData.collectedState || {};
+        // markerTypes 也屬於 Project 設定的一部分。
+        // v1.0 雖然仍使用固定類型，但先保留完整備份/還原能力。
+        if (Array.isArray(projectData.markerTypes) &&
+            projectData.markerTypes.length > 0) {
 
-        localStorage.setItem(
-            `collectedState_${currentMapId}`,
-            JSON.stringify(collectedState)
-        );
+            markerTypes = projectData.markerTypes;
 
-        renderMapSelect();
+            localStorage.setItem(
+                "markerTypes",
+                JSON.stringify(markerTypes)
+            );
 
-        loadItems();
+        }
 
-        clearSelection();
+    }
+    catch (error) {
 
-        updateProgress();
+        console.error("Project import failed:", error);
 
-        updateFilters();
+        // 清除這次 Import 已經建立，但尚未正式使用的資料。
+        for (const map of importedMaps) {
 
-        updateVisibleCount();
+            localStorage.removeItem(
+                `customItems_${map.id}`
+            );
 
-    };
+            localStorage.removeItem(
+                `collectedState_${map.id}`
+            );
 
-    reader.readAsText(file);
+        }
+
+        for (const imageKey of createdImageKeys) {
+
+            try {
+                await deleteMapImage(imageKey);
+            }
+            catch (cleanupError) {
+                console.warn("Failed to clean imported image:", cleanupError);
+            }
+
+        }
+
+        // 若 maps 尚未安全切換完成，就恢復記憶體中的舊 maps。
+        maps = oldMaps;
+        saveMaps();
+
+        alert("Project import failed. Your existing project was kept.");
+        return;
+
+    }
+
+    renderMarkerTypes();
+    renderMapSelect();
+
+    clearAllMarkersFromScreen();
+    clearSelection();
+
+    const currentMap =
+        maps.find(map => map.id === currentMapId);
+
+    if (currentMap) {
+
+        const imageData =
+            await loadMapImage(currentMap.imageKey);
+
+        if (imageData) {
+            gameMapImage.src = imageData;
+        }
+        else {
+            gameMapImage.removeAttribute("src");
+        }
+
+    }
+
+    resetMapView();
+    await loadItems();
+    updateEmptyState();
+
+    alert(`Project imported successfully. ${maps.length} map(s) restored.`);
 
 }
-
 
 // ==============================
 // Maps / 地圖資料讀取與保存
@@ -1955,9 +2133,11 @@ function importProject(file) {
  *     {
  *         id: "map_123456",
  *         name: "Map Name",
- *         image: "data:image/png;base64,..."
+ *         imageKey: "map_123456"
  *     }
  * ]
+ *
+ * 圖片本體不放在 localStorage，而是用 imageKey 存取 IndexedDB。
  */
 function loadMaps() {
 
@@ -2096,6 +2276,13 @@ async function saveMapImage(imageKey, imageData) {
  */
 async function loadMapImage(imageKey) {
 
+    // 舊版 maps 資料可能沒有 imageKey。
+    // IndexedDB 的 get(undefined) 會直接丟 DataError，
+    // 因此沒有 key 時視為「找不到圖片」即可。
+    if (!imageKey) {
+        return null;
+    }
+
     const db =
         await openMapImageDb();
 
@@ -2132,6 +2319,13 @@ async function loadMapImage(imageKey) {
  */
 async function deleteMapImage(imageKey) {
 
+    // 舊版 maps 資料可能沒有 imageKey。
+    // 沒有 IndexedDB 圖片可刪時直接略過，
+    // 仍允許刪除 map metadata / markers / collected state。
+    if (!imageKey) {
+        return;
+    }
+
     const db =
         await openMapImageDb();
 
@@ -2163,51 +2357,6 @@ async function deleteMapImage(imageKey) {
 }
 
 // ==============================
-// Map Image / 舊版單一地圖圖片載入
-// ==============================
-
-/**
- * 載入保存過的地圖圖片。
- *
- * 注意：
- * 這個函式比較像舊版單一地圖用的。
- *
- * 你現在已經有 maps 陣列和 currentMapId，
- * 所以主要流程應該改由：
- * 1. loadMaps()
- * 2. 取得 currentMapId
- * 3. 從 maps 找 currentMap
- * 4. gameMapImage.src = currentMap.image
- *
- * 如果你的 init() 已經處理多地圖，
- * 這個函式可能可以不用了。
- */
-function loadSavedMapImage() {
-
-    const savedMapImage =
-        localStorage.getItem("mapImage");
-
-    const savedMapId =
-        localStorage.getItem("currentMapId");
-
-    if (savedMapId) {
-
-        currentMapId = savedMapId;
-
-    }
-
-    if (savedMapImage) {
-
-        gameMapImage.src = savedMapImage;
-
-        // 上傳新地圖時重置縮放與位移
-        resetMapView();
-
-    }
-
-}
-
-// ==============================
 // Map Upload / 上傳新地圖
 // ==============================
 
@@ -2227,94 +2376,109 @@ function loadSavedMapImage() {
  * 7. 清空目前地圖 marker
  * 8. 重新渲染地圖下拉選單
  */
-function uploadMapImage(file) {
+async function uploadMapImage(file) {
 
     const maxSizeMB = 2;
 
     if (file.size > maxSizeMB * 1024 * 1024) {
 
         alert(`圖片過大. 請重新上傳小於 ${maxSizeMB}MB的圖片。`);
-
         return;
 
     }
 
-    const reader =
-        new FileReader();
+    const imageData =
+        await new Promise((resolve, reject) => {
 
-    reader.onload = (event) => {
+            const reader =
+                new FileReader();
 
-        // 圖片轉成 base64 DataURL 後的結果
-        const imageData =
-            event.target.result;
+            reader.onload = (event) =>
+                resolve(event.target.result);
 
-        // 讓使用者輸入地圖名稱，預設用檔名
-        const mapName =
-            prompt("Map name?", file.name);
+            reader.onerror = () =>
+                reject(reader.error);
 
-        if (!mapName) {
-            return;
-        }
+            reader.readAsDataURL(file);
 
-        // 建立新的地圖 id
-        currentMapId =
-            "map_" + Date.now();
+        }).catch(() => null);
 
-        // 建立新的地圖資料
-        const newMap = {
-            id: currentMapId,
-            name: mapName,
-            imageKey: currentMapId
-        };
+    if (!imageData) {
 
-        // 加入地圖清單
-        maps.push(newMap);
+        alert("Failed to read map image.");
+        return;
 
-        const savedSuccessfully =
-            saveMaps();
+    }
 
-        if (!savedSuccessfully) {
+    const mapName =
+        prompt("Map name?", file.name);
 
-            maps =
-                maps.filter(map =>
-                    map.id !== currentMapId
-                );
+    if (!mapName) {
+        return;
+    }
 
-            currentMapId =
-                localStorage.getItem("currentMapId") || "default";
+    const newMapId =
+        "map_" + Date.now();
 
-            return;
-
-        }
-
-        localStorage.setItem(
-            "currentMapId",
-            currentMapId
-        );
-
-        // 顯示新地圖圖片
-        gameMapImage.src = imageData;
-
-        // 上傳新地圖時重置縮放與位移
-        resetMapView();
-
-        // 新地圖一開始沒有自訂 marker
-        customItems = [];
-        saveCustomItems();
-
-        // 清除畫面上的舊 marker
-        clearAllMarkersFromScreen();
-
-        // 更新地圖選單
-        renderMapSelect();
-
-        // 載入目前地圖的 marker
-        loadItems();
-
+    const newMap = {
+        id: newMapId,
+        name: mapName.trim() || file.name,
+        imageKey: newMapId
     };
 
-    // 將圖片檔讀成 DataURL，讓它可以直接放進 img.src
-    reader.readAsDataURL(file);
+    try {
+
+        await saveMapImage(
+            newMap.imageKey,
+            imageData
+        );
+
+    }
+    catch (error) {
+
+        alert("Failed to save map image.");
+        return;
+
+    }
+
+    maps.push(newMap);
+
+    if (!saveMaps()) {
+
+        maps =
+            maps.filter(map => map.id !== newMapId);
+
+        await deleteMapImage(newMap.imageKey);
+        return;
+
+    }
+
+    currentMapId =
+        newMapId;
+
+    localStorage.setItem(
+        "currentMapId",
+        currentMapId
+    );
+
+    gameMapImage.src =
+        imageData;
+
+    resetMapView();
+
+    customItems = [];
+    saveCustomItems();
+
+    localStorage.setItem(
+        `collectedState_${currentMapId}`,
+        JSON.stringify({})
+    );
+
+    clearAllMarkersFromScreen();
+    clearSelection();
+    renderMapSelect();
+    await loadItems();
+    updateEmptyState();
 
 }
 
@@ -2607,6 +2771,28 @@ function updateCurrentMapName() {
  * ]
  */
 async function loadMarkerTypes() {
+
+    const saved =
+        localStorage.getItem("markerTypes");
+
+    if (saved) {
+
+        try {
+
+            const parsed =
+                JSON.parse(saved);
+
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                markerTypes = parsed;
+                return;
+            }
+
+        }
+        catch (error) {
+            console.warn("Invalid saved markerTypes. Falling back to defaults.", error);
+        }
+
+    }
 
     const response =
         await fetch("data/markerTypes.json");
@@ -2957,25 +3143,6 @@ resetBtn.addEventListener("click", () => {
 
 });
 
-
-
-importInput.addEventListener("change", (event) => {
-
-    const file =
-        event.target.files[0];
-
-    console.log("import file:", file);
-
-    if (file) {
-
-        importSave(file);
-
-    }
-
-    // 讓下次選同一個檔案也會觸發 change
-    event.target.value = "";
-
-});
 
 // ==============================
 // Map Drag / 拖曳整張地圖
