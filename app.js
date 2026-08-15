@@ -9,7 +9,9 @@ const mapContainer =
 
 // 上方篩選區中的所有 checkbox，例如 boss / chest / npc / hide collected 等
 const filterCheckboxes =
-    document.querySelectorAll(".filter-panel input");
+    document.querySelectorAll(
+        '.checkbox-group input[type="checkbox"]:not(#hide-collected-checkbox)'
+    );
 
 // 滑鼠移到 marker 上時顯示的小提示框
 const tooltip =
