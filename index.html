@@ -10,221 +10,464 @@
 </head>
 <body>
 
-    <div class="filter-panel">
-        <input
-            type="text"
-            id="search-input"
-            placeholder="Search..."
-        />
+    <div class="app-shell">
 
-        <label>
-            <input
-                type="checkbox"
-                id="hide-collected-checkbox"
-            />
-            Hide Collected
-        </label>
+        <!-- ==============================
+             Top Bar
+        =============================== -->
+        <header class="topbar">
 
-        <label>
-            <input type="checkbox" value="boss" checked />
-            Boss
-        </label>
+            <div class="brand-section">
+                <div class="brand-icon">M</div>
 
-        <label>
-            <input type="checkbox" value="chest" checked />
-            Chest
-        </label>
+                <div>
+                    <h1>Interactive Map</h1>
 
-        <label>
-            <input type="checkbox" value="npc" checked />
-            NPC
-        </label>
-
-        
-        <button id="reset-filters-btn">
-            Reset Filters
-        </button>
-
-
-        <select id="region-filter">
-            <option value="all">All Regions</option>
-            <option value="Forest">Forest</option>
-            <option value="Town">Town</option>
-        </select>
-
-        <select id="rarity-filter">
-            <option value="all">All Rarity</option>
-            <option value="Common">Common</option>
-            <option value="Rare">Rare</option>
-        </select>
-
-
-        <button id="reset-btn">
-            Reset Save
-        </button>
-
-        //座標顯示
-        <span id="coordinate-text">
-            X: -, Y: -
-        </span>
-
-        <span id="progress-text">
-            Collected: 0 / 0
-        </span>
-
-        <span id="visible-count-text">
-            Showing: 0 / 0
-        </span>
-
-        <button id="export-btn">
-        Export Save
-        </button>
-
-        <input
-            type="file"
-            id="import-input"
-            hidden
-        />
-
-        <button id="import-btn">
-            Import Save
-        </button>
-
-        <button id="export-project-btn">
-            Export Project
-        </button>
-
-        <input
-        type="file"
-        id="import-project-input"
-        hidden
-        />
-
-        <button id="import-project-btn">
-            Import Project
-        </button>
-
-        <input type="file" id="map-upload-input"accept="image/*" hidden/>
-
-        <button id="upload-map-btn">
-            Upload Map
-        </button>
-
-        <select id="map-select">
-
-            <option value="">Select Map</option>
-
-        </select>
-
-        <button id="edit-mode-btn">
-            Edit Mode: Off
-        </button>
-
-    </div>
-
-    <div class="main-layout">
-
-        <div class="map-viewport">
-            <div class="map-container">
-
-            <img
-                src="images/map.jpg"
-                alt="Game Map"
-                class="game-map"
-            />
-
-            <div id="tooltip"></div>
-
-            </div>
-        </div>
-
-        <div class="sidebar-section">
-            <h3>Map Management</h3>
-
-             <span id="current-map-name">
-                Current Map: -
-            </span>
-
-            <button id="rename-map-btn">
-                Rename Map
-            </button>
-
-            <button id="delete-map-btn">
-                Delete Map
-            </button>
-
-            <button id="reset-view-btn">
-                Reset View
-            </button>
-        </div>
-        
-        <div class="sidebar">
-
-            <h2>Item Info</h2>
-
-            <div id="sidebar-content">
-
-                Click a marker...
-
+                    <span id="current-map-name">
+                        Current Map: -
+                    </span>
+                </div>
             </div>
 
-            <div class="marker-form">
+            <div class="topbar-actions">
 
-                <h3>Create Marker</h3>
-
-                <input
-                    type="text"
-                    id="new-marker-name"
-                    placeholder="Marker name"
-                />
-
-                <select id="new-marker-type">
-                </select>
-
-                <button id="create-marker-btn">
-                    Create Marker
+                <button
+                    id="edit-mode-btn"
+                    class="button button-primary"
+                >
+                    Edit Mode: Off
                 </button>
 
-                <p class="form-hint">
-                    Turn on Edit Mode, click map position, then create marker.
-                </p>
+                <button
+                    id="export-project-btn"
+                    class="button"
+                >
+                    Export Project
+                </button>
+
+                <input
+                    type="file"
+                    id="import-project-input"
+                    accept=".json,application/json"
+                    hidden
+                />
+
+                <button
+                    id="import-project-btn"
+                    class="button"
+                >
+                    Import Project
+                </button>
 
             </div>
 
-            <button id="delete-marker-btn">
-                Delete Marker
-            </button>
+        </header>
 
-            <button id="edit-marker-btn">
-                Edit Marker
-            </button>
 
-            <button id="duplicate-marker-btn">
-                Duplicate Marker
-            </button>
+        <!-- ==============================
+             Main Workspace
+        =============================== -->
+        <main class="workspace">
 
-            <button id="clear-selection-btn">
-                Clear Selection
-            </button>
+            <!-- Left Panel -->
+            <aside class="left-panel">
 
-            <button id="copy-coordinates-btn">
-                Copy Coordinates
-            </button>
+                <!-- Map Management -->
+                <section class="panel-card">
 
-            <div id="marker-editor">
+                    <div class="section-heading">
+                        <span class="section-eyebrow">
+                            Project
+                        </span>
 
-            <input
-                id="new-marker-name"
-                placeholder="Marker Name"
-            />
+                        <h2>Map Management</h2>
+                    </div>
 
-            <select id="new-marker-type">
-            </select>
+                    <label class="field-label" for="map-select">
+                        Current Map
+                    </label>
 
-            </div>
-            
+                    <select id="map-select">
+                        <option value="">
+                            Select Map
+                        </option>
+                    </select>
 
-        </div>
+                    <div class="button-grid">
+
+                        <input
+                            type="file"
+                            id="map-upload-input"
+                            accept="image/*"
+                            hidden
+                        />
+
+                        <button
+                            id="upload-map-btn"
+                            class="button button-primary"
+                        >
+                            Upload Map
+                        </button>
+
+                        <button
+                            id="rename-map-btn"
+                            class="button"
+                        >
+                            Rename
+                        </button>
+
+                        <button
+                            id="reset-view-btn"
+                            class="button"
+                        >
+                            Reset View
+                        </button>
+
+                        <button
+                            id="delete-map-btn"
+                            class="button button-danger"
+                        >
+                            Delete
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+                <!-- Filters -->
+                <section class="panel-card">
+
+                    <div class="section-heading">
+                        <span class="section-eyebrow">
+                            View
+                        </span>
+
+                        <h2>Filters</h2>
+                    </div>
+
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="Search markers..."
+                    />
+
+                    <div class="field-row">
+
+                        <div class="field-group">
+                            <label
+                                class="field-label"
+                                for="region-filter"
+                            >
+                                Region
+                            </label>
+
+                            <select id="region-filter">
+                                <option value="all">
+                                    All Regions
+                                </option>
+
+                                <option value="Forest">
+                                    Forest
+                                </option>
+
+                                <option value="Town">
+                                    Town
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="field-group">
+                            <label
+                                class="field-label"
+                                for="rarity-filter"
+                            >
+                                Rarity
+                            </label>
+
+                            <select id="rarity-filter">
+                                <option value="all">
+                                    All Rarity
+                                </option>
+
+                                <option value="Common">
+                                    Common
+                                </option>
+
+                                <option value="Rare">
+                                    Rare
+                                </option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div class="checkbox-group">
+
+                        <label class="checkbox-row">
+                            <input
+                                type="checkbox"
+                                value="boss"
+                                checked
+                            />
+
+                            <span>Boss</span>
+                        </label>
+
+                        <label class="checkbox-row">
+                            <input
+                                type="checkbox"
+                                value="chest"
+                                checked
+                            />
+
+                            <span>Chest</span>
+                        </label>
+
+                        <label class="checkbox-row">
+                            <input
+                                type="checkbox"
+                                value="npc"
+                                checked
+                            />
+
+                            <span>NPC</span>
+                        </label>
+
+                        <label class="checkbox-row checkbox-row-wide">
+                            <input
+                                type="checkbox"
+                                id="hide-collected-checkbox"
+                            />
+
+                            <span>
+                                Hide Collected
+                            </span>
+                        </label>
+
+                    </div>
+
+                    <button
+                        id="reset-filters-btn"
+                        class="button button-full"
+                    >
+                        Reset Filters
+                    </button>
+
+                </section>
+
+
+                <!-- Save -->
+                <section class="panel-card">
+
+                    <div class="section-heading">
+                        <span class="section-eyebrow">
+                            Progress
+                        </span>
+
+                        <h2>Save Data</h2>
+                    </div>
+
+                    <div class="button-stack">
+
+                        <button
+                            id="export-btn"
+                            class="button"
+                        >
+                            Export Save
+                        </button>
+
+                        <input
+                            type="file"
+                            id="import-input"
+                            accept=".json,application/json"
+                            hidden
+                        />
+
+                        <button
+                            id="import-btn"
+                            class="button"
+                        >
+                            Import Save
+                        </button>
+
+                        <button
+                            id="reset-btn"
+                            class="button button-danger-soft"
+                        >
+                            Reset Save
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+                <!-- Create Marker -->
+                <section class="panel-card marker-form">
+
+                    <div class="section-heading">
+                        <span class="section-eyebrow">
+                            Editor
+                        </span>
+
+                        <h2>Create Marker</h2>
+                    </div>
+
+                    <input
+                        type="text"
+                        id="new-marker-name"
+                        placeholder="Marker name"
+                    />
+
+                    <select id="new-marker-type">
+                    </select>
+
+                    <button
+                        id="create-marker-btn"
+                        class="button button-primary button-full"
+                    >
+                        Create Marker
+                    </button>
+
+                    <p class="form-hint">
+                        Enable Edit Mode, click a position on the map,
+                        then create the marker.
+                    </p>
+
+                </section>
+
+            </aside>
+
+
+            <!-- Map Area -->
+            <section class="map-area">
+
+                <div class="map-toolbar">
+
+                    <div class="map-toolbar-title">
+                        Map View
+                    </div>
+
+                    <div class="map-toolbar-hint">
+                        Drag to move · Scroll to zoom
+                    </div>
+
+                </div>
+
+                <div class="map-viewport">
+
+                    <div class="map-container">
+
+                        <img
+                            src="images/map.jpg"
+                            alt="Game Map"
+                            class="game-map"
+                        />
+
+                        <div id="tooltip"></div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- Right Sidebar -->
+            <aside class="right-panel">
+
+                <section class="panel-card details-card">
+
+                    <div class="section-heading">
+                        <span class="section-eyebrow">
+                            Selection
+                        </span>
+
+                        <h2>Item Info</h2>
+                    </div>
+
+                    <div id="sidebar-content">
+                        Click a marker...
+                    </div>
+
+                </section>
+
+
+                <section class="panel-card">
+
+                    <div class="section-heading">
+                        <span class="section-eyebrow">
+                            Actions
+                        </span>
+
+                        <h2>Marker Tools</h2>
+                    </div>
+
+                    <div class="button-stack">
+
+                        <button
+                            id="edit-marker-btn"
+                            class="button"
+                        >
+                            Edit Marker
+                        </button>
+
+                        <button
+                            id="duplicate-marker-btn"
+                            class="button"
+                        >
+                            Duplicate Marker
+                        </button>
+
+                        <button
+                            id="copy-coordinates-btn"
+                            class="button"
+                        >
+                            Copy Coordinates
+                        </button>
+
+                        <button
+                            id="clear-selection-btn"
+                            class="button"
+                        >
+                            Clear Selection
+                        </button>
+
+                        <button
+                            id="delete-marker-btn"
+                            class="button button-danger"
+                        >
+                            Delete Marker
+                        </button>
+
+                    </div>
+
+                </section>
+
+            </aside>
+
+        </main>
+
+
+        <!-- ==============================
+             Status Bar
+        =============================== -->
+        <footer class="statusbar">
+
+            <span id="coordinate-text">
+                X: -, Y: -
+            </span>
+
+            <span id="progress-text">
+                Collected: 0 / 0
+            </span>
+
+            <span id="visible-count-text">
+                Showing: 0 / 0
+            </span>
+
+        </footer>
 
     </div>
 

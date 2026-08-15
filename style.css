@@ -1,12 +1,509 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #0d1015;
+    --surface: #151922;
+    --surface-soft: #1b202b;
+    --surface-hover: #242a36;
+
+    --border: #2b3240;
+    --border-soft: #222936;
+
+    --text: #f2f4f7;
+    --text-soft: #aeb6c4;
+    --text-muted: #727d8d;
+
+    --accent: #5a8dee;
+    --accent-hover: #709df2;
+
+    --danger: #bd4b57;
+    --danger-hover: #d45d69;
+
+    --radius: 10px;
+}
+
+
+/* ==============================
+   Page
+============================== */
+
 body {
     margin: 0;
-    background-color: #111;
 
-    font-family: Arial, sans-serif;
+    min-width: 1100px;
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at top,
+            #171c26 0,
+            #0d1015 460px
+        );
+
+    color: var(--text);
+
+    font-family:
+        Inter,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+
+/* ==============================
+   App Shell
+============================== */
+
+.app-shell {
+    min-height: 100vh;
 
     display: flex;
     flex-direction: column;
+}
+
+
+/* ==============================
+   Top Bar
+============================== */
+
+.topbar {
+    min-height: 72px;
+
+    padding: 12px 22px;
+
+    display: flex;
     align-items: center;
+    justify-content: space-between;
+
+    gap: 24px;
+
+    background: rgba(17, 21, 29, 0.95);
+
+    border-bottom: 1px solid var(--border);
+
+    position: sticky;
+    top: 0;
+
+    z-index: 500;
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+}
+
+.brand-icon {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: var(--accent);
+
+    font-size: 19px;
+    font-weight: 700;
+
+    color: white;
+}
+
+.brand-section h1 {
+    margin: 0;
+
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+#current-map-name {
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--text-soft);
+
+    font-size: 12px;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+/* ==============================
+   Main Layout
+============================== */
+
+.workspace {
+    width: 100%;
+
+    flex: 1;
+
+    display: grid;
+
+    grid-template-columns:
+        260px
+        minmax(620px, 1fr)
+        290px;
+
+    gap: 14px;
+
+    padding: 14px;
+
+    min-height: 0;
+}
+
+
+/* ==============================
+   Side Panels
+============================== */
+
+.left-panel,
+.right-panel {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+
+    min-width: 0;
+}
+
+.panel-card {
+    padding: 14px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+}
+
+.section-heading {
+    margin-bottom: 12px;
+}
+
+.section-heading h2 {
+    margin: 2px 0 0;
+
+    font-size: 15px;
+}
+
+.section-eyebrow {
+    color: var(--text-muted);
+
+    text-transform: uppercase;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 0.1em;
+}
+
+
+/* ==============================
+   Inputs
+============================== */
+
+#search-input,
+select,
+.marker-form input,
+#sidebar-content input,
+#sidebar-content select,
+#sidebar-content textarea {
+    width: 100%;
+
+    padding: 8px 10px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 7px;
+
+    outline: none;
+
+    background: var(--surface-soft);
+
+    color: var(--text);
+
+    transition:
+        border-color 0.15s,
+        background-color 0.15s;
+}
+
+#search-input:focus,
+select:focus,
+.marker-form input:focus,
+#sidebar-content input:focus,
+#sidebar-content select:focus,
+#sidebar-content textarea:focus {
+    border-color: var(--accent);
+
+    background: #202632;
+}
+
+.field-label {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: var(--text-soft);
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.field-row {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 8px;
+
+    margin-top: 10px;
+}
+
+.field-group {
+    min-width: 0;
+}
+
+
+/* ==============================
+   Checkboxes
+============================== */
+
+.checkbox-group {
+    margin: 12px 0;
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 7px;
+}
+
+.checkbox-row {
+    padding: 7px 8px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    border: 1px solid var(--border-soft);
+
+    border-radius: 7px;
+
+    background: var(--surface-soft);
+
+    color: var(--text-soft);
+
+    cursor: pointer;
+
+    font-size: 12px;
+}
+
+.checkbox-row:hover {
+    background: var(--surface-hover);
+}
+
+.checkbox-row-wide {
+    grid-column: 1 / -1;
+}
+
+.checkbox-row input {
+    margin: 0;
+
+    accent-color: var(--accent);
+}
+
+
+/* ==============================
+   Buttons
+============================== */
+
+.button {
+    min-height: 34px;
+
+    padding: 7px 10px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 7px;
+
+    background: var(--surface-soft);
+
+    color: var(--text);
+
+    cursor: pointer;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    transition:
+        background-color 0.15s,
+        border-color 0.15s,
+        transform 0.1s;
+}
+
+.button:hover {
+    background: var(--surface-hover);
+
+    border-color: #3a4353;
+}
+
+.button:active {
+    transform: translateY(1px);
+}
+
+.button-primary {
+    background: var(--accent);
+
+    border-color: var(--accent);
+
+    color: white;
+}
+
+.button-primary:hover {
+    background: var(--accent-hover);
+
+    border-color: var(--accent-hover);
+}
+
+.button-danger {
+    background: #392127;
+
+    border-color: #61313a;
+
+    color: #f3bec3;
+}
+
+.button-danger:hover {
+    background: #4a2830;
+
+    border-color: var(--danger);
+}
+
+.button-danger-soft {
+    color: #e4a6ad;
+}
+
+.button-danger-soft:hover {
+    background: #352127;
+}
+
+.button-grid {
+    margin-top: 9px;
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 7px;
+}
+
+.button-stack {
+    display: flex;
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+.button-full {
+    width: 100%;
+}
+
+
+/* ==============================
+   Map
+============================== */
+
+.map-area {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    overflow: hidden;
+}
+
+.map-toolbar {
+    min-height: 45px;
+
+    padding: 0 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    border-bottom: 1px solid var(--border);
+
+    background: #12161e;
+}
+
+.map-toolbar-title {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.map-toolbar-hint {
+    color: var(--text-muted);
+
+    font-size: 11px;
+}
+
+.map-viewport {
+    width: 100%;
+    height: calc(100vh - 158px);
+
+    min-height: 560px;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            45deg,
+            #080a0d 25%,
+            #0b0e12 25%,
+            #0b0e12 50%,
+            #080a0d 50%,
+            #080a0d 75%,
+            #0b0e12 75%
+        );
+
+    background-size: 22px 22px;
+
+    cursor: grab;
+
+    user-select: none;
+
+    position: relative;
+}
+
+.map-viewport.dragging {
+    cursor: grabbing;
 }
 
 .map-container {
@@ -14,15 +511,25 @@ body {
 
     width: 1600px;
 
-    margin-top: 0;
-
     transform-origin: 0 0;
 }
 
 .game-map {
     width: 100%;
+
     display: block;
+
+    user-select: none;
+
+    -webkit-user-drag: none;
+
+    pointer-events: none;
 }
+
+
+/* ==============================
+   Marker
+============================== */
 
 .marker {
     position: absolute;
@@ -36,7 +543,10 @@ body {
 
     cursor: pointer;
 
-    transition: 0.2s;
+    transition:
+        transform 0.15s,
+        filter 0.15s,
+        opacity 0.15s;
 
     z-index: 10;
 
@@ -44,335 +554,253 @@ body {
 }
 
 .marker:hover {
-
     transform:
         translate(-50%, -50%)
-        scale(1.2);
+        scale(1.18);
+}
 
+.marker.selected {
+    transform:
+        translate(-50%, -50%)
+        scale(1.35);
+
+    filter:
+        drop-shadow(0 0 7px white);
+
+    z-index: 100;
 }
 
 .marker.collected {
-    background-color: gray;
+    opacity: 0.48;
+
+    filter: grayscale(0.8);
 }
 
 
-.filter-panel {
-    width: 2000px;
-
-    margin-top: 20px;
-    margin-bottom: 10px;
-
-    color: white;
-
-    display: flex;
-    gap: 20px;
-
-    font-size: 18px;
-}
-
-.filter-panel input {
-    margin-right: 6px;
-}
+/* ==============================
+   Tooltip
+============================== */
 
 #tooltip {
     position: absolute;
 
-    background-color: rgba(0, 0, 0, 0.9);
+    min-width: 120px;
 
-    color: white;
-
-    padding: 10px;
-
-    border-radius: 8px;
-
-    font-size: 14px;
-
-    pointer-events: none;
+    padding: 8px 10px;
 
     display: none;
 
     z-index: 999;
 
-    border: 1px solid #666;
+    pointer-events: none;
 
-    min-width: 120px;
-}
+    background: rgba(8, 10, 14, 0.94);
 
-.main-layout {
-    display: flex;
+    border: 1px solid #3b4452;
 
-    gap: 20px;
-
-    align-items: flex-start;
-}
-
-.sidebar {
-    width: 300px;
-
-    min-height: 500px;
-
-    background-color: #1b1b1b;
-
-    border: 1px solid #444;
-
-    padding: 20px;
+    border-radius: 7px;
 
     color: white;
 
-    border-radius: 10px;
+    font-size: 12px;
+
+    box-shadow:
+        0 6px 20px rgba(0, 0, 0, 0.35);
 }
 
-.sidebar h2 {
-    margin-top: 0;
+
+/* ==============================
+   Sidebar Content
+============================== */
+
+.details-card {
+    min-height: 280px;
 }
 
 #sidebar-content {
-    line-height: 1.8;
+    color: var(--text-soft);
+
+    font-size: 13px;
+
+    line-height: 1.6;
 }
 
-.marker.selected {
+#sidebar-content h3 {
+    color: var(--text);
 
-    transform:
-        translate(-50%, -50%)
-        scale(1.4);
-
-    filter:
-        drop-shadow(0 0 8px white);
-
-    z-index: 100;
+    margin-top: 0;
 }
-
-#search-input {
-
-    width: 220px;
-
-    padding: 8px 12px;
-
-    border-radius: 6px;
-
-    border: 1px solid #555;
-
-    background-color: #222;
-
-    color: white;
-
-    font-size: 14px;
-}
-
-#progress-text {
-    margin-left: auto;
-
-    color: #ddd;
-
-    font-weight: bold;
-}
-
-.filter-panel button {
-
-    padding: 8px 14px;
-
-    border: none;
-
-    border-radius: 6px;
-
-    background-color: #333;
-
-    color: white;
-
-    cursor: pointer;
-
-    transition: 0.2s;
-}
-
-.filter-panel button:hover {
-
-    background-color: #555;
-}
-
-
-.map-viewport {
-    width: 1000px;
-    height: 700px;
-
-    overflow: hidden;
-
-    border: 2px solid #444;
-
-    background-color: #000;
-
-    cursor: grab;
-
-    user-select: none;
-}
-
-.map-viewport.dragging {
-    cursor: grabbing;
-}
-
-.game-map {
-    width: 100%;
-    display: block;
-
-    user-select: none;
-    -webkit-user-drag: none;
-    pointer-events: none;
-}
-
-#region-filter {
-    padding: 8px 12px;
-
-    border-radius: 6px;
-
-    border: 1px solid #555;
-
-    background-color: #222;
-
-    color: white;
-
-    font-size: 14px;
-}
-
-#rarity-filter {
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid #555;
-    background-color: #222;
-    color: white;
-    font-size: 14px;
-}
-
-.sidebar-image {
-
-    width: 60%;
-
-    border-radius: 10px;
-
-    margin-bottom: 16px;
-
-    border: 1px solid #555;
-}
-
-.wiki-link {
-    display: inline-block;
-
-    margin-top: 10px;
-
-    padding: 8px 12px;
-
-    background-color: #333;
-
-    color: white;
-
-    text-decoration: none;
-
-    border-radius: 6px;
-}
-
-.wiki-link:hover {
-    background-color: #555;
-}
-
-.marker-form {
-    margin-top: 20px;
-}
-
-.marker-form input,
-.marker-form select {
-    width: 100%;
-
-    box-sizing: border-box;
-
-    margin-bottom: 10px;
-
-    padding: 8px 10px;
-
-    border-radius: 6px;
-
-    border: 1px solid #555;
-
-    background-color: #222;
-
-    color: white;
-}
-
-.marker-form button {
-    width: 100%;
-
-    padding: 8px 10px;
-
-    border: none;
-
-    border-radius: 6px;
-
-    background-color: #333;
-
-    color: white;
-
-    cursor: pointer;
-}
-
-.marker-form button:hover {
-    background-color: #555;
-}
-
-.form-hint {
-    font-size: 12px;
-    color: #aaa;
-}
-
-#coordinate-text {
-    color: #ddd;
-
-    font-weight: bold;
-
-    margin-left: 10px;
-}
-
 
 #sidebar-content label {
     display: block;
+
     margin-top: 10px;
     margin-bottom: 4px;
-    font-weight: bold;
-}
 
-#sidebar-content input,
-#sidebar-content select,
-#sidebar-content textarea {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 6px;
-    margin-bottom: 8px;
+    color: var(--text);
+
+    font-size: 12px;
+
+    font-weight: 600;
 }
 
 #sidebar-content textarea {
-    min-height: 80px;
+    min-height: 85px;
+
     resize: vertical;
+}
+
+.sidebar-image {
+    width: 100%;
+
+    max-height: 180px;
+
+    object-fit: cover;
+
+    margin-bottom: 12px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 8px;
 }
 
 .sidebar-button-row {
     display: flex;
-    gap: 8px;
+
+    gap: 7px;
+
     margin-top: 10px;
 }
 
 .sidebar-button-row button {
     flex: 1;
-    padding: 6px;
 }
 
-#current-map-name {
-    font-weight: bold;
-    white-space: nowrap;
+
+/* ==============================
+   Marker Form
+============================== */
+
+.marker-form input,
+.marker-form select {
+    margin-bottom: 8px;
 }
-/*
-可合併
-#region-filter,
-#rarity-filter {
-    padding: 8px 12px;
+
+.form-hint {
+    margin: 9px 0 0;
+
+    color: var(--text-muted);
+
+    font-size: 11px;
+
+    line-height: 1.45;
+}
+
+
+/* ==============================
+   Wiki
+============================== */
+
+.wiki-link {
+    display: inline-flex;
+
+    padding: 6px 9px;
+
+    margin-top: 6px;
+
+    border: 1px solid var(--border);
+
     border-radius: 6px;
-    border: 1px solid #555;
-    background-color: #222;
-    color: white;
-    font-size: 14px;
-}*/
+
+    background: var(--surface-soft);
+
+    color: var(--text);
+
+    text-decoration: none;
+
+    font-size: 12px;
+}
+
+.wiki-link:hover {
+    background: var(--surface-hover);
+}
+
+
+/* ==============================
+   Status Bar
+============================== */
+
+.statusbar {
+    min-height: 34px;
+
+    padding: 0 16px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 24px;
+
+    background: #11151c;
+
+    border-top: 1px solid var(--border);
+
+    color: var(--text-soft);
+
+    font-size: 11px;
+}
+
+#coordinate-text {
+    min-width: 120px;
+}
+
+#progress-text,
+#visible-count-text {
+    font-weight: 600;
+}
+
+
+/* ==============================
+   Responsive
+============================== */
+
+@media (max-width: 1350px) {
+
+    .workspace {
+        grid-template-columns:
+            230px
+            minmax(560px, 1fr)
+            250px;
+    }
+
+    .topbar-actions {
+        gap: 5px;
+    }
+
+    .button {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+}
+
+@media (max-width: 1150px) {
+
+    .workspace {
+        grid-template-columns:
+            220px
+            minmax(540px, 1fr);
+    }
+
+    .right-panel {
+        grid-column: 1 / -1;
+
+        display: grid;
+
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .map-viewport {
+        height: 620px;
+    }
+
+}

@@ -2477,7 +2477,9 @@ async function uploadMapImage(file) {
     clearAllMarkersFromScreen();
     clearSelection();
     renderMapSelect();
+
     await loadItems();
+
     updateEmptyState();
 
 }
@@ -2663,7 +2665,7 @@ async function deleteCurrentMap() {
 
         renderMapSelect();
 
-        loadItems();
+        await loadItems();
 
     }
     else {
@@ -2735,7 +2737,9 @@ async function switchMap(mapId) {
 
     clearAllMarkersFromScreen();
 
-    loadItems();
+    await loadItems();
+
+    updateCurrentMapName();
 
 }
 
