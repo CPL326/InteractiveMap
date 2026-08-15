@@ -4,6 +4,12 @@ A local-first interactive game map editor built with vanilla HTML, CSS, and Java
 
 It lets users upload their own map images, place and manage custom markers, track collected items, switch between multiple maps, and back up or restore the entire project without a backend server.
 
+## Live Demo
+
+GitHub Pages:
+
+https://cpl326.github.io/InteractiveMap/
+
 ## Features
 
 ### Map management
@@ -87,20 +93,16 @@ InteractiveMap/
 
 ## Deployment
 
-The application is a static website and can be hosted with GitHub Pages.
-
-Recommended GitHub Pages settings:
+The application is deployed as a static website with GitHub Pages from the `main` branch root directory.
 
 ```text
 Branch: main
 Folder: /(root)
 ```
 
-After GitHub Pages is enabled, the project site is expected to be available at:
+Live site:
 
-```text
 https://cpl326.github.io/InteractiveMap/
-```
 
 ## Technology
 
@@ -115,7 +117,7 @@ No frontend framework or backend service is required.
 
 ## Current Status
 
-The core v1.0 workflow is complete and has been tested for:
+The core v1.0 workflow is complete, deployed, and has been tested for:
 
 - map upload and persistence
 - switching between multiple maps
