@@ -1103,15 +1103,26 @@ function importSave(file) {
     const reader =
         new FileReader();
 
+<<<<<<< HEAD
     reader.onload = (event) => {
 
         let saveData;
+=======
+    // 當檔案讀取完成後會執行這段
+    reader.onload = async (event) => {
 
-        try {
+    const imageData =
+        event.target.result;
+>>>>>>> f67be5832dcae7a63f902783f18848a871655d1e
 
-            saveData =
-                JSON.parse(event.target.result);
+    const mapName =
+        prompt("Map name?", file.name);
 
+    if (!mapName) {
+        return;
+    }
+
+<<<<<<< HEAD
         }
         catch (error) {
 
@@ -1165,9 +1176,75 @@ function importSave(file) {
         updateProgress();
         updateFilters();
         updateVisibleCount();
+=======
+    currentMapId =
+        "map_" + Date.now();
+>>>>>>> f67be5832dcae7a63f902783f18848a871655d1e
 
+    const newMap = {
+        id: currentMapId,
+        name: mapName,
+        imageKey: currentMapId
     };
 
+<<<<<<< HEAD
+=======
+    try {
+
+        await saveMapImage(newMap.imageKey, imageData);
+
+    }
+    catch (error) {
+
+        alert("Failed to save map image.");
+
+        return;
+
+    }
+
+    maps.push(newMap);
+
+    const savedSuccessfully =
+        saveMaps();
+
+    if (!savedSuccessfully) {
+
+        await deleteMapImage(newMap.imageKey);
+
+        maps =
+            maps.filter(map =>
+                map.id !== currentMapId
+            );
+
+        currentMapId =
+            localStorage.getItem("currentMapId") || "default";
+
+        return;
+
+    }
+
+    localStorage.setItem(
+        "currentMapId",
+        currentMapId
+    );
+
+    gameMapImage.src =
+        imageData;
+
+    resetMapView();
+
+    customItems = [];
+    saveCustomItems();
+
+    clearAllMarkersFromScreen();
+
+    renderMapSelect();
+
+    loadItems();
+
+};
+    // 以文字方式讀取檔案
+>>>>>>> f67be5832dcae7a63f902783f18848a871655d1e
     reader.readAsText(file);
 
 }
@@ -1997,6 +2074,165 @@ function saveMaps() {
 
 // ==============================
 // IndexedDB / 地圖圖片儲存
+<<<<<<< HEAD
+=======
+// ==============================
+
+const mapImageDbName = "InteractiveMapDB";
+const mapImageStoreName = "mapImages";
+
+/**
+ * 開啟 IndexedDB。
+ *
+ * IndexedDB 用來存比較大的資料，例如地圖圖片。
+ */
+function openMapImageDb() {
+
+    return new Promise((resolve, reject) => {
+
+        const request =
+            indexedDB.open(mapImageDbName, 1);
+
+        request.onupgradeneeded = (event) => {
+
+            const db =
+                event.target.result;
+
+            if (!db.objectStoreNames.contains(mapImageStoreName)) {
+
+                db.createObjectStore(mapImageStoreName);
+
+            }
+
+        };
+
+        request.onsuccess = (event) => {
+
+            resolve(event.target.result);
+
+        };
+
+        request.onerror = () => {
+
+            reject(request.error);
+
+        };
+
+    });
+
+}
+
+
+/**
+ * 儲存地圖圖片到 IndexedDB。
+ */
+async function saveMapImage(imageKey, imageData) {
+
+    const db =
+        await openMapImageDb();
+
+    return new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(mapImageStoreName, "readwrite");
+
+        const store =
+            transaction.objectStore(mapImageStoreName);
+
+        const request =
+            store.put(imageData, imageKey);
+
+        request.onsuccess = () => {
+
+            resolve();
+
+        };
+
+        request.onerror = () => {
+
+            reject(request.error);
+
+        };
+
+    });
+
+}
+
+
+/**
+ * 從 IndexedDB 讀取地圖圖片。
+ */
+async function loadMapImage(imageKey) {
+
+    const db =
+        await openMapImageDb();
+
+    return new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(mapImageStoreName, "readonly");
+
+        const store =
+            transaction.objectStore(mapImageStoreName);
+
+        const request =
+            store.get(imageKey);
+
+        request.onsuccess = () => {
+
+            resolve(request.result);
+
+        };
+
+        request.onerror = () => {
+
+            reject(request.error);
+
+        };
+
+    });
+
+}
+
+
+/**
+ * 從 IndexedDB 刪除地圖圖片。
+ */
+async function deleteMapImage(imageKey) {
+
+    const db =
+        await openMapImageDb();
+
+    return new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(mapImageStoreName, "readwrite");
+
+        const store =
+            transaction.objectStore(mapImageStoreName);
+
+        const request =
+            store.delete(imageKey);
+
+        request.onsuccess = () => {
+
+            resolve();
+
+        };
+
+        request.onerror = () => {
+
+            reject(request.error);
+
+        };
+
+    });
+
+}
+
+// ==============================
+// Map Image / 舊版單一地圖圖片載入
+>>>>>>> f67be5832dcae7a63f902783f18848a871655d1e
 // ==============================
 
 const mapImageDbName = "InteractiveMapDB";
@@ -2212,7 +2448,16 @@ async function uploadMapImage(file) {
 
         }).catch(() => null);
 
+<<<<<<< HEAD
     if (!imageData) {
+=======
+        // 建立新的地圖資料
+        const newMap = {
+            id: currentMapId,
+            name: mapName,
+            imageKey: currentMapId
+        };
+>>>>>>> f67be5832dcae7a63f902783f18848a871655d1e
 
         alert("Failed to read map image.");
         return;
